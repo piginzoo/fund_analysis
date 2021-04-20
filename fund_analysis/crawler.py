@@ -1,17 +1,18 @@
 # 导入需要的模块
 import argparse
 import logging
-import os
 import random
-import re
 import time
 
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import requests
 from bs4 import BeautifulSoup
+
+from fund_analysis.conf import NUM_PER_PAGE
+from fund_analysis.helper import get_start_end_date, get_page_num, get_content, save_data
+from fund_analysis.utils import load_data
 
 logger = logging.getLogger(__name__)
 
@@ -21,72 +22,9 @@ matplotlib.rcParams['font.family'] = 'sans-serif'
 # 解决负号'-'显示为方块的问题
 matplotlib.rcParams['axes.unicode_minus'] = False
 
-NUM_PER_PAGE = 40
-
-
-# 抓取网页
-def get_url(url, proxies=None):
-    rsp = requests.get(url, proxies=proxies)
-    rsp.raise_for_status()
-    return rsp.text
-
-
-def save_history(history):
-    with open("db/history.txt", "w") as f:
-        for h in history:
-            f.write(h)
-            f.write("\n")
-
-
-def load_history():
-    if not os.path.exists("db/history.txt"): return set()
-
-    with open("db/history.txt", "r") as f:
-        lines = f.readlines()
-        lines = [line.strip() for line in lines]
-    logger.info("加载了爬取历史：%d 条", len(lines))
-    return set(lines)
-
-
-def load_data(code):
-    csv_path = "db/{}.csv".format(code)
-
-    if not os.path.exists(csv_path):
-        logger.error("数据文件 %s 不存在", csv_path)
-        return None
-
-    df = pd.read_csv(csv_path)
-    logger.info("加载了[%s]数据，行数：%d", csv_path, len(df))
-    return df
-
-
-def get_pages(code):
-    """
-    xxxx,records:2570,pages:65,xxx
-    获得整个页数
-    """
-    url = 'http://fund.eastmoney.com/f10/F10DataApi.aspx?type=lsjz&code={}&page=1&per={}'.format(code, NUM_PER_PAGE)
-    html = get_url(url)
-    # 获取总页数
-    pattern = re.compile(r'pages:(.*),')
-    result = re.search(pattern, html).group(1)
-    page_num = int(result)
-    logger.info("页数：%d，依据URL：%s", page_num, url)
-    return int(page_num)
-
 
 # 从网页抓取数据
-def get_fund_data(code, page, history):
-    # 从第1页开始抓取所有页面数据
-    url = 'http://fund.eastmoney.com/f10/F10DataApi.aspx?type=lsjz&code={}&page={}&per={}'.format(code, page,
-                                                                                                  NUM_PER_PAGE)
-    if url in history:
-        logger.info("此页面已经爬取过，忽略：%s", url)
-        return None
-
-    html = get_url(url)
-    logger.debug(url)
-
+def parse_html(html):
     soup = BeautifulSoup(html, 'html.parser')
 
     # 获取表头
@@ -119,22 +57,23 @@ def get_fund_data(code, page, history):
     for col, col_name in enumerate(heads):
         data[col_name] = np_records[:, col]
 
-    history.add(url)
     return data
 
 
 def main(code):
     total_data = load_data(code)
-    history = load_history()
 
-    exit()
+    start_date, end_date = get_start_end_date(code, total_data)
 
-    page_num = get_pages(code)
-    logger.info("一共%d页，每页40条数据", page_num)
+    logger.info("准备爬取 [%s] --> [%s] 的数据", start_date, end_date)
+
+    page_num = get_page_num(code, start_date, end_date)
 
     for i in range(1, page_num + 1):
 
-        data = get_fund_data(code, page=i, history=history)
+        html = get_content(code, NUM_PER_PAGE, start_date, end_date)
+
+        data = parse_html(html)
 
         if data is None:
             continue
@@ -152,9 +91,7 @@ def main(code):
         else:
             total_data = data
 
-        data_path = "db/{}.csv".format(code)
-        total_data.to_csv(data_path, index='净值日期')
-        save_history(history)
+        data_path = save_data(code, total_data)
 
         time.sleep(random.random() * 10)
         logger.info("已将第%d页数据保存到[%s]中，准备爬取第%d页", i, data_path, i + 1)
@@ -203,9 +140,6 @@ def show(data):
 # python -m fund_analysis.crawler --code 161725
 # python -m fund_analysis.crawler --code 110022
 if __name__ == "__main__":
-    logging.basicConfig(format='%(asctime)s:%(filename)s:%(lineno)d:%(levelname)s : %(message)s',
-                        level=logging.DEBUG,
-                        handlers=[logging.StreamHandler()])
     parser = argparse.ArgumentParser()
     parser.add_argument('--code', '-c', type=str)
     args = parser.parse_args()

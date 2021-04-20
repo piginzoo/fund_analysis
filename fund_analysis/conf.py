@@ -1,0 +1,4 @@
+NUM_PER_PAGE=40
+
+COL_NAME_DATE='净值日期'
+DB_DIR='db'
