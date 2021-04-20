@@ -9,22 +9,23 @@ from fund_analysis.utils import get_url, init_logger, get_yesterday, get_days_fr
 logger = logging.getLogger(__name__)
 
 
-def get_content(code, num_per_page=NUM_PER_PAGE, sdate=None, edate=None):
+def get_content(code, page, num_per_page=NUM_PER_PAGE, sdate=None, edate=None):
     """
     xxxx,records:2570,pages:65,xxx
     获得整个页数
     """
     if sdate:
-        url = 'http://fund.eastmoney.com/f10/F10DataApi.aspx?type=lsjz&code={}&page=1&per={}&sdate={}&edate={}'.format(
-            code, num_per_page, sdate, edate)
+        url = 'http://fund.eastmoney.com/f10/F10DataApi.aspx?type=lsjz&code={}&page={}&per={}&sdate={}&edate={}'.format(
+            code, page, num_per_page, sdate, edate)
     else:
-        url = 'http://fund.eastmoney.com/f10/F10DataApi.aspx?type=lsjz&code={}&page=1&per={}'.format(code, num_per_page)
+        url = 'http://fund.eastmoney.com/f10/F10DataApi.aspx?type=lsjz&code={}&page={}&per={}'.format(
+            code, page, num_per_page)
     html = get_url(url)
     return html
 
 
 def get_page_num(code, sdate=None, edate=None):
-    html = get_content(code, NUM_PER_PAGE, sdate, edate)
+    html = get_content(code, 1, NUM_PER_PAGE, sdate, edate)
 
     # 获取总页数
     pattern = re.compile(r'pages:(.*),')
@@ -56,13 +57,13 @@ def save_data(code, df):
 def get_start_end_date(code, df):
     if df is None:
         num = get_page_num(code)
-        _from = get_yesterday()
-        _end = get_days_from_now(num)
+        _end = get_yesterday()
+        _from = get_days_from_now(num * NUM_PER_PAGE)
         logger.debug("第一次爬取，共[%d]条，从[%s]-->[%s]", num, _from, _end)
         return _from, _end
 
     latest_day = get_latest_day(df)
-    return get_yesterday(), latest_day
+    return latest_day, get_yesterday()
 
 
 # python -m fund_analysis.prepare

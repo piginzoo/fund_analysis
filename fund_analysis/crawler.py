@@ -12,7 +12,7 @@ from bs4 import BeautifulSoup
 
 from fund_analysis.conf import NUM_PER_PAGE
 from fund_analysis.helper import get_start_end_date, get_page_num, get_content, save_data
-from fund_analysis.utils import load_data
+from fund_analysis.utils import load_data,init_logger
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +71,7 @@ def main(code):
 
     for i in range(1, page_num + 1):
 
-        html = get_content(code, NUM_PER_PAGE, start_date, end_date)
+        html = get_content(code, i, NUM_PER_PAGE, start_date, end_date)
 
         data = parse_html(html)
 
@@ -86,10 +86,12 @@ def main(code):
         # 按照日期升序排序并重建索引
         data = data.sort_values(by='净值日期', axis=0, ascending=True).reset_index(drop=True)
 
-        if total_data:
-            total_data.append(data)
-        else:
+        if total_data is None:
             total_data = data
+            logger.debug("基金[%s]不存在，创建[%d]条", code, len(data))
+        else:
+            total_data = total_data.append(data)
+            logger.debug("追加[%d]条到基金[%s]中，合计[%d]条",len(data),code,len(total_data))
 
         data_path = save_data(code, total_data)
 
@@ -140,6 +142,7 @@ def show(data):
 # python -m fund_analysis.crawler --code 161725
 # python -m fund_analysis.crawler --code 110022
 if __name__ == "__main__":
+    init_logger()
     parser = argparse.ArgumentParser()
     parser.add_argument('--code', '-c', type=str)
     args = parser.parse_args()

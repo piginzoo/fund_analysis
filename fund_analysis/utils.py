@@ -35,9 +35,9 @@ def get_yesterday():
 
 def get_days_from_now(num):
     """返回从今天开始往前数num天的日期"""
-    today = datetime.now()
+    today = datetime.datetime.now()
     start_date = today - datetime.timedelta(days=num)
-    return datetime.strftime(start_date, "%Y-%m-%d")
+    return datetime.datetime.strftime(start_date, "%Y-%m-%d")
 
 
 def init_logger():
