@@ -31,16 +31,12 @@ def get_page_num(code, sdate=None, edate=None):
     pattern = re.compile(r'pages:(.*),')
     result = re.search(pattern, html).group(1)
     page_num = int(result)
-    logger.info("代码[%s] 有 %d 页，每页 %d 条", code, page_num, NUM_PER_PAGE)
+    logger.info("获得 代码[%s]的信息：共有 %d 页，每页 %d 条，开始日期：%r，结束日期：%r", code, page_num, NUM_PER_PAGE, sdate, edate)
     return int(page_num)
 
 
 def get_latest_day(df):
-    return df[COL_NAME_DATE].iloc[-1]
-
-
-def get_missing_days(df, from_date):
-    pass
+    return df.index[-1]
 
 
 def save_data(code, df):
@@ -49,7 +45,10 @@ def save_data(code, df):
         logger.debug("目录[%s]不存在，创建", dir)
         os.makedirs(dir)
     data_path = os.path.join(dir, "{}.csv".format(code))
-    df.to_csv(data_path, index=COL_NAME_DATE)
+    # 按照日期升序排序并重建索引
+    df.set_index(COL_NAME_DATE, inplace=True)
+    df = df.sort_index()  # 把日期排序
+    df.to_csv(data_path, index_label=COL_NAME_DATE)
     logger.debug("保存了[%s]", data_path)
     return data_path
 
@@ -57,12 +56,18 @@ def save_data(code, df):
 def get_start_end_date(code, df):
     if df is None:
         num = get_page_num(code)
+
+        if num == 0:
+            logger.debug("无法从页面中提取爬取的天数，天数为0")
+            return None, None
+
         _end = get_yesterday()
         _from = get_days_from_now(num * NUM_PER_PAGE)
-        logger.debug("第一次爬取，共[%d]条，从[%s]-->[%s]", num, _from, _end)
+        logger.info("第一次爬取，共[%d]条，从[%s]-->[%s]", num, _from, _end)
         return _from, _end
 
     latest_day = get_latest_day(df)
+    logger.info("断点续爬：爬取从今天 (%r) -> (%r) 的数据", latest_day, get_yesterday())
     return latest_day, get_yesterday()
 
 

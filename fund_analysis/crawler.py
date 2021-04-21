@@ -10,9 +10,9 @@ import numpy as np
 import pandas as pd
 from bs4 import BeautifulSoup
 
-from fund_analysis.conf import NUM_PER_PAGE
+from fund_analysis.conf import NUM_PER_PAGE, COL_NAME_DATE
 from fund_analysis.helper import get_start_end_date, get_page_num, get_content, save_data
-from fund_analysis.utils import load_data,init_logger
+from fund_analysis.utils import load_data, init_logger
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +56,6 @@ def parse_html(html):
     data = pd.DataFrame()
     for col, col_name in enumerate(heads):
         data[col_name] = np_records[:, col]
-
     return data
 
 
@@ -64,6 +63,14 @@ def main(code):
     total_data = load_data(code)
 
     start_date, end_date = get_start_end_date(code, total_data)
+
+    if start_date is None and end_date is None:
+        logger.info("爬取失败[%s]，原因：无法获得起止日期", code)
+        return
+
+    if start_date == end_date:
+        logger.info("无需爬取[%s]，原因：开始和结束日期[%r]一样", code, start_date)
+        return
 
     logger.info("准备爬取 [%s] --> [%s] 的数据", start_date, end_date)
 
@@ -83,20 +90,23 @@ def main(code):
         data['单位净值'] = data['单位净值'].astype(float)
         data['累计净值'] = data['累计净值'].astype(float)
         data['日增长率'] = data['日增长率'].str.strip('%').astype(float)
-        # 按照日期升序排序并重建索引
-        data = data.sort_values(by='净值日期', axis=0, ascending=True).reset_index(drop=True)
 
         if total_data is None:
             total_data = data
             logger.debug("基金[%s]不存在，创建[%d]条", code, len(data))
         else:
             total_data = total_data.append(data)
-            logger.debug("追加[%d]条到基金[%s]中，合计[%d]条",len(data),code,len(total_data))
+            logger.debug("追加[%d]条到基金[%s]中，合计[%d]条", len(data), code, len(total_data))
 
-        data_path = save_data(code, total_data)
+        time.sleep(random.random() * 5)
+        logger.info("已爬完第%d页数据，准备爬取第%d页", i, i + 1)
 
-        time.sleep(random.random() * 10)
-        logger.info("已将第%d页数据保存到[%s]中，准备爬取第%d页", i, data_path, i + 1)
+    if total_data is None:
+        logger.error("代码 [%s] 爬取失败!!!")
+        return
+
+    data_path = save_data(code, total_data)
+    logger.info("保存%d行所有数据，到[%s]中", len(total_data), data_path)
 
 
 def show(data):

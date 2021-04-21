@@ -6,6 +6,8 @@ import os
 import pandas as pd
 import requests
 
+from fund_analysis.conf import COL_NAME_DATE
+
 logger = logging.getLogger(__name__)
 
 
@@ -53,7 +55,7 @@ def load_data(code):
         logger.error("数据文件 %s 不存在", csv_path)
         return None
 
-    df = pd.read_csv(csv_path)
+    df = pd.read_csv(csv_path,index_col=COL_NAME_DATE)
     logger.info("加载了[%s]数据，行数：%d", csv_path, len(df))
     return df
 
