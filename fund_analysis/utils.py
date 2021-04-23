@@ -6,7 +6,7 @@ import os
 import pandas as pd
 import requests
 
-from fund_analysis.conf import COL_NAME_DATE
+from fund_analysis.conf import COL_NAME_DATE, DB_DIR
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,7 @@ def init_logger():
 
 
 def load_data(code):
-    csv_path = "db/{}.csv".format(code)
+    csv_path = os.path.join(DB_DIR,"{}.csv".format(code))
 
     if not os.path.exists(csv_path):
         logger.error("数据文件 %s 不存在", csv_path)

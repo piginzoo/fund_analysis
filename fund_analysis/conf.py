@@ -3,7 +3,7 @@ NUM_PER_PAGE = 40
 COL_NAME_DATE = '净值日期'
 COL_ACCUMULATIVE_NET = '累计净值'
 
-DB_DIR = 'db'
+DB_DIR = 'data/db'
 
 PERIOD_WEEK = 'week'
 PERIOD_DAY = 'day'

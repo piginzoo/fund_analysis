@@ -15,6 +15,9 @@ logger = logging.getLogger(__name__)
 
 def main(args):
     data = utils.load_data(args.code)
+
+    if data is None: return
+
     data = data.loc[args.start:args.end]
     start_time = time.time()
 
