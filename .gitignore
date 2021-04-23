@@ -1,3 +1,5 @@
 .idea/
+fund_list.zip
+data/db
 log/
 *.pyc

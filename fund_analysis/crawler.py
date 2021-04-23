@@ -98,7 +98,7 @@ def main(code):
             total_data = total_data.append(data)
             logger.debug("追加[%d]条到基金[%s]中，合计[%d]条", len(data), code, len(total_data))
 
-        time.sleep(random.random() * 5)
+        time.sleep(random.random() * 1)
         logger.info("已爬完第%d页数据，准备爬取第%d页", i, i + 1)
 
     if total_data is None:
