@@ -59,11 +59,10 @@ http://fund.eastmoney.com/f10/F10DataApi.aspx?type=lsjz&code=377240&page=1&per=2
 
 按照0~1的间隔持续爬取了40个小时，终于爬下来所有的数据，大概是11000个基金，300M的大小，压缩后是55M，由于太大，我没有放到git中，
 而是放到百度云盘上，可以通过
-```
+
 数据: 请解压缩数据到 <data/db> 文件夹中，
-链接: https://pan.baidu.com/s/134xIJdd2vVmnP7msa7ujcw 提取码: 3e6d 
-```
-来获取，然后解压缩到 <data/db>目录下即可。
+链接: <https://pan.baidu.com/s/134xIJdd2vVmnP7msa7ujcw> 提取码: **3e6d** 
+
 
 ## 2. 定投分析
 
