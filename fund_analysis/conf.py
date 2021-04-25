@@ -4,6 +4,7 @@ COL_NAME_DATE = '净值日期'
 COL_ACCUMULATIVE_NET = '累计净值'
 
 DB_DIR = 'data/db'
+PLAN_DIR = 'data/plan'
 
 PERIOD_WEEK = 'week'
 PERIOD_DAY = 'day'

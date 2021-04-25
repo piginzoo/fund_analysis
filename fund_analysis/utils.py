@@ -6,7 +6,7 @@ import os
 import pandas as pd
 import requests
 
-from fund_analysis.conf import COL_NAME_DATE, DB_DIR
+from fund_analysis.conf import COL_NAME_DATE, DB_DIR, PLAN_DIR, PERIOD_MONTH
 
 logger = logging.getLogger(__name__)
 
@@ -49,15 +49,45 @@ def init_logger():
 
 
 def load_data(code):
-    csv_path = os.path.join(DB_DIR,"{}.csv".format(code))
+    csv_path = os.path.join(DB_DIR, "{}.csv".format(code))
 
     if not os.path.exists(csv_path):
         logger.error("数据文件 %s 不存在", csv_path)
         return None
 
-    df = pd.read_csv(csv_path,index_col=COL_NAME_DATE)
+    df = pd.read_csv(csv_path, index_col=COL_NAME_DATE)
     logger.info("加载了[%s]数据，行数：%d", csv_path, len(df))
     return df
+
+
+def load_plan(path):
+    csv_path = os.path.join(PLAN_DIR, path)
+
+    if not os.path.exists(csv_path):
+        logger.error("定投计划文件 %s 不存在", csv_path)
+        return None
+
+    with open(path,"r",encoding='utf-8') as f:
+        lines = f.readlines()
+        lines = [l.strip() for l in lines]
+
+    # invest_history=[]
+    # for l in lines:
+    #     date,amount = l.split(",")
+    #     if is_date(date):
+    #         invest_history.append([date,float(amount)])
+    #     if l.startswith(PERIOD_MONTH):
+    #
+    #
+    # return df
+
+
+def is_date(text):
+    try:
+        dt = datetime.datetime.strptime(text,'%Y-%m-%d' )
+        return True
+    except ValueError:
+        return False
 
 
 # python -m fund_analysis.utils
