@@ -22,8 +22,8 @@ def main(args):
     start_time = time.time()
 
     invest_data = filter_invest_by(data, args.period, args.day)
-    # print(data.info())
-    # print(data.describe())
+    # print(invest_data.info())
+    # print(invest_data.describe())
     # print(invest_data)
 
     price_of_last_day = invest_data[[COL_ACCUMULATIVE_NET]].iloc[-1]
@@ -54,26 +54,49 @@ def invest(invest_data, price_of_last_day):
 
 
 def filter_invest_by(data, period, day):
+    """
+    根据过滤日期的类型<period:week,day,month>，和 day（第几天）来过滤数据
+    思路是遍历每一天的数据，如果这一天可以和day对上，就确定这条数据，
+
+    但是这里有个bug，就是那天可能是休息日，比如每月1号定投，但是10.1号是公共假日，就没有交易数据，
+    这种情况下，就需要向后顺延，直到可以找到有交易数据，但是对周而言，可能会一周都是休息日，那么就要忽略这周了。
+
+    :param data: 按照index日期排序过的
+    :param period: 日期类型
+    :param day: 第几日，比如周3，或者每月第3日
+    :return:
+    """
     indices = []
 
+    current_month = None
+    is_invested_this_month = False
     for date_index, one in data.iterrows():
+
         date = datetime.strptime(date_index, "%Y-%m-%d")
+        if current_month!= date.month:
+            # if current_month: logger.debug("从[%d]月=>[%d]月", current_month, date.month)
+            is_invested_this_month = False
+            current_month = date.month
 
         # invest everyday
         if period == conf.PERIOD_DAY:
-            # candidate_df.append(one)
             indices.append(date_index)
 
         # only invest at Monday
         if period == conf.PERIOD_WEEK and date.weekday() == day:
-            # candidate_df.append(one)
             indices.append(date_index)
 
         # only invest at first day of each month
-
-        if period == conf.PERIOD_MONTH and date.day == day:
-            # candidate_df.append(one)
-            indices.append(date_index)
+        if period == conf.PERIOD_MONTH and date.day >= day:
+            if date.day == day:
+                indices.append(date_index)
+                is_invested_this_month = True
+                continue
+            if not is_invested_this_month:
+                logger.debug("这个[%d]月，不是第[%d]号投(假日)，而是顺延到[%d]号投的",date.month,day,date.day)
+                indices.append(date_index)
+                is_invested_this_month = True
+                continue
 
     logger.debug("数据经过[%s]过滤,剩余%d条", period, len(indices))
     return data.loc[indices]
