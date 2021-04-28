@@ -10,7 +10,7 @@ fi
 if [ "$1" == "all" ]
 then
     echo "爬取所有的基金..."
-    python -m fund_analysis.main>log/log.txt 2>&1 &
+    python -m fund_analysis.crawler.main>log/log.txt 2>&1 &
     exit
 fi
 
@@ -23,4 +23,4 @@ fi
 
 
 echo "爬取 <基金代码>，代码：$*"
-python -m fund_analysis.crawler $*
+python -m fund_analysis.crawler.crawler $*

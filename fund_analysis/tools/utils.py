@@ -1,5 +1,5 @@
 # 抓取网页
-from datetime import datetime
+import datetime
 import logging
 import os
 
@@ -20,8 +20,10 @@ def get_url(url, proxies=None):
 
 
 def str2date(date_str):
-    return datetime.strptime(date_str, DATE_FORMAT)
+    return datetime.datetime.strptime(date_str, DATE_FORMAT)
 
+def date2str(date):
+    return date.strftime(DATE_FORMAT)
 
 def interval_days(from_date, end_date):
     """
@@ -29,8 +31,8 @@ def interval_days(from_date, end_date):
     :param end_date:
     :return:
     """
-    date_from = datetime.strptime(from_date, DATE_FORMAT)
-    date_end = datetime.strptime(end_date, DATE_FORMAT)
+    date_from = datetime.datetime.strptime(from_date, DATE_FORMAT)
+    date_end = datetime.datetime.strptime(end_date, DATE_FORMAT)
     interval = date_end - date_from  # 两日期差距
     return interval.days
 
@@ -41,9 +43,9 @@ def get_yesterday():
 
 def get_days_from_now(num):
     """返回从今天开始往前数num天的日期"""
-    today = datetime.now()
+    today = datetime.datetime.now()
     start_date = today - datetime.timedelta(days=num)
-    return datetime.strftime(start_date, DATE_FORMAT)
+    return datetime.datetime.strftime(start_date, DATE_FORMAT)
 
 
 def init_logger():
@@ -62,15 +64,19 @@ def load_data(code):
         logger.error("数据文件 %s 不存在", csv_path)
         return None
 
-    dateparse = lambda x: datetime.strptime(x, DATE_FORMAT)
-    df = pd.read_csv(csv_path, index_col=COL_NAME_DATE, parse_dates=True, date_parser=dateparse)
+    dateparse = lambda x: datetime.datetime.strptime(x, DATE_FORMAT)
+    df = pd.read_csv(csv_path,
+                     index_col=COL_NAME_DATE,
+                     parse_dates=True,
+                     date_parser=dateparse)
+
     logger.info("加载了[%s]数据，行数：%d", csv_path, len(df))
     return df
 
 
 def is_date(text):
     try:
-        dt = datetime.strptime(text, DATE_FORMAT)
+        dt = datetime.datetime.strptime(text, DATE_FORMAT)
         return True
     except ValueError:
         return False
