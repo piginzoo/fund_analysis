@@ -40,12 +40,12 @@ def profit(real_invest_data, last_day_price, charge_buy_rate,charge_sell_rate):
         if amount>0:
             charge_amount = amount * charge_buy_rate
         else:
-            charge_amount = abs(amount * charge_sell_rate)
+            charge_amount = abs(amount * charge_sell_rate) # notice: use abs
 
         total_charge += charge_amount
 
         exclude_charge_amount = amount - charge_amount
-        share = exclude_charge_amount / price  # 当日购买的份额
+        share = exclude_charge_amount / price  # the bought share in the trade day
         total_share += share
 
         logger.debug("[%r] 按价格[%.3f],花费[%.3f]元,扣除手续费[%.3f]后，购买[%.3f]份额",

@@ -11,8 +11,8 @@ import pandas as pd
 from bs4 import BeautifulSoup
 
 from fund_analysis.conf import NUM_PER_PAGE, COL_NAME_DATE
-from fund_analysis.crawler.helper import get_start_end_date, get_page_num, get_content, save_data
-from fund_analysis.tools.utils import load_data, init_logger
+from fund_analysis.crawler.helper import get_start_end_date, get_page_num, get_content
+from fund_analysis.tools.utils import load_data, init_logger,save_data
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +62,7 @@ def parse_html(html):
 def main(code):
     total_data = load_data(code)
 
+
     start_date, end_date = get_start_end_date(code, total_data)
 
     if start_date is None and end_date is None:
@@ -86,7 +87,8 @@ def main(code):
             continue
 
         # 修改数据类型
-        data['净值日期'] = pd.to_datetime(data['净值日期'], format='%Y/%m/%d')
+        data[COL_NAME_DATE] = pd.to_datetime(data[COL_NAME_DATE], format='%Y/%m/%d')
+        data.set_index(COL_NAME_DATE, inplace=True)
         data['单位净值'] = data['单位净值'].astype(float)
         data['累计净值'] = data['累计净值'].astype(float)
         data['日增长率'] = data['日增长率'].str.strip('%').astype(float)
@@ -96,6 +98,8 @@ def main(code):
             logger.debug("基金[%s]不存在，创建[%d]条", code, len(data))
         else:
             total_data = total_data.append(data)
+            print(total_data)
+
             logger.debug("追加[%d]条到基金[%s]中，合计[%d]条", len(data), code, len(total_data))
 
         time.sleep(random.random() * 1)
@@ -111,7 +115,7 @@ def main(code):
 
 def show(data):
     # 获取净值日期、单位净值、累计净值、日增长率等数据并
-    net_value_date = data['净值日期']
+    net_value_date = data[COL_NAME_DATE]
     net_asset_value = data['单位净值']
     accumulative_net_value = data['累计净值']
     daily_growth_rate = data['日增长率']

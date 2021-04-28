@@ -45,7 +45,7 @@ def get_days_from_now(num):
     """返回从今天开始往前数num天的日期"""
     today = datetime.datetime.now()
     start_date = today - datetime.timedelta(days=num)
-    return datetime.datetime.strftime(start_date, DATE_FORMAT)
+    return start_date.date() # .date() to reset the time to midnight(00:00)
 
 
 def init_logger():
@@ -72,6 +72,20 @@ def load_data(code):
 
     logger.info("加载了[%s]数据，行数：%d", csv_path, len(df))
     return df
+
+def save_data(code,df):
+    dir = DB_DIR
+    if not os.path.exists(dir):
+        logger.debug("目录[%s]不存在，创建", dir)
+        os.makedirs(dir)
+    data_path = os.path.join(dir, "{}.csv".format(code))
+
+    # reindex the date column and sort it
+    df = df.sort_index()
+
+    df.to_csv(data_path, index_label=COL_NAME_DATE)
+    logger.debug("保存了[%s]", data_path)
+    return data_path
 
 
 def is_date(text):

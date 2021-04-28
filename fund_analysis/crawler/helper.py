@@ -40,18 +40,6 @@ def get_latest_day(df):
     return df.index[-1]
 
 
-def save_data(code, df):
-    dir = conf.DB_DIR
-    if not os.path.exists(dir):
-        logger.debug("目录[%s]不存在，创建", dir)
-        os.makedirs(dir)
-    data_path = os.path.join(dir, "{}.csv".format(code))
-    # 按照日期升序排序并重建索引
-    df.set_index(COL_NAME_DATE, inplace=True)
-    df = df.sort_index()  # 把日期排序
-    df.to_csv(data_path, index_label=COL_NAME_DATE)
-    logger.debug("保存了[%s]", data_path)
-    return data_path
 
 
 def get_start_end_date(code, df):
