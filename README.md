@@ -131,18 +131,13 @@ month_11,1000
 ### 运行利润计算
 
 ```
-bin/invest.sh
-
-bin/invest.sh --code <基金代码> --start <定投开始日期> --end <定投结束日期> --period <day|week|month> --day <第几日>"
+bin/profit.sh --code <基金代码> --plan <定投计划文件>"
 ```
 
 需要输入一下参数：
- - code     基金代码
- - start    定投开始日期 
- - end      定投结束日期
- - period <day|week|month>，分别代表是每天都定投、每周都定投、每个月都定投 
- - day      第几日，意思是每周第几天、每个月第几天，当period为day时候此参数无效 
-
+ - code    基金代码
+ - plan    定投计划文件的全路径 
+ 
 样例：
 
 ```
