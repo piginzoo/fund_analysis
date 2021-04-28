@@ -12,12 +12,18 @@ df.to_csv("test.csv", index_label="index_label")
 df_read_csv2 = pd.read_csv("tzzs_data2.csv")
 print(df_read_csv2)
 
+import py
 
 
 df3 = pd.DataFrame()
 new_data= \
-    [["2019-01-10",1.240,1.776,1.97,"!!开放申购","开放赎回", "NaN"],
-    ["2019-01-11",1.240,1.776,1.97,"!!开放申购","开放赎回", "NaN"]]
+    [["2019-01-10", 1.0,1.0,1.97,"!!开放申购","开放赎回", "NaN"],
+     ["2019-01-11", 1.240,1.776,1.97,"!!开放申购","开放赎回", "NaN"],
+     ["2019-01-12", 1.240, 1.776, 1.97, "!!开放申购", "开放赎回", "NaN"],
+     ["2019-01-13", 1.240, 1.776, 1.97, "!!开放申购", "开放赎回", "NaN"],
+     ["2019-01-14", 1.240, 1.776, 1.97, "!!开放申购", "开放赎回", "NaN"],
+     ["2019-01-15", 1.240, 1.776, 1.97, "!!开放申购", "开放赎回", "NaN"]]
+
 headers=['净值日期','单位净值','累计净值','日增长率','申购状态','赎回状态','分红送配']
 new_data = np.array(new_data)
 for col, col_name in enumerate(headers):
@@ -25,6 +31,9 @@ for col, col_name in enumerate(headers):
     df3[col_name] = new_data[:, col]
 df3.set_index("净值日期",inplace=True)
 df3.to_csv("test.csv",index="净值日期")
+
+## 测试算收益
+
 
 
 
