@@ -20,13 +20,17 @@ class RealInvestRecord():
 
 def profit(real_invest_data, last_day_price, charge_buy_rate,charge_sell_rate):
     """
+    calculate the profit by the filtered data.
     :param real_invest_data:
     :param last_day_price:
-    :param charge: 手续费
+    :param charge_buy_rate:
+    :param charge_sell_rate:
     :return:
     """
     total_share = 0.0
     total_investment = 0.0
+    total_pure_investment = 0.0
+    total_redeem = 0.0
     total_charge = 0.0
 
     logger.debug("-----------------------------------")
@@ -35,15 +39,16 @@ def profit(real_invest_data, last_day_price, charge_buy_rate,charge_sell_rate):
         date = utils.date2str(data.invest_record.date)
 
         amount = data.invest_record.amount
-        total_investment += amount
 
         if amount>0:
+            total_investment += amount
             charge_amount = amount * charge_buy_rate
+            total_pure_investment += (amount - charge_amount)
         else:
             charge_amount = abs(amount * charge_sell_rate) # notice: use abs
+            total_redeem += abs(amount - charge_amount)
 
         total_charge += charge_amount
-
         exclude_charge_amount = amount - charge_amount
         share = exclude_charge_amount / price  # the bought share in the trade day
         total_share += share
@@ -53,9 +58,12 @@ def profit(real_invest_data, last_day_price, charge_buy_rate,charge_sell_rate):
 
 
     total_assets = last_day_price * total_share
+
     # calcluate the profit need to deduct the charge
-    profit = (total_assets - (total_investment - total_charge)) / (total_investment - total_charge)
-    return profit, total_assets, total_investment, total_share, total_charge
+    profit = (total_assets +  total_redeem + total_charge) / total_pure_investment - 1
+    pure_profit = (total_assets + total_redeem ) / total_investment - 1
+
+    return profit, pure_profit, total_assets, total_investment, total_share, total_charge, total_redeem
 
 
 def get_real_invest_data(fund_data, invest_records):
@@ -111,12 +119,16 @@ def main(args):
 
     fund_data = utils.load_data(args.code)
     price_of_last_day = fund_data[[COL_ACCUMULATIVE_NET]].iloc[-1]
+
     real_invest_data = get_real_invest_data(fund_data, invest_records)
-    profit_percentage, total_assets, total_investment, total_share, total_charge = \
+
+    profit_percentage, pure_profit, total_assets, total_investment, total_share, total_charge, total_redeem = \
         profit(real_invest_data, price_of_last_day, args.charge_buy, args.charge_sell)
+
     logger.info(
         "\n基金代码:\t %s ,\
-        \n投资利润:\t%.3f%%,\
+        \n基金利润:\t%.3f%%,\
+        \n实际利润:\t%.3f%%,\
         \n投资金额:\t%.3f 元,\
         \n手续费  :\t%.3f 元,\
         \n实投金额:\t%.3f 元,\
@@ -126,12 +138,13 @@ def main(args):
         \n投资次数:\t%d 次",
         args.code,
         profit_percentage * 100,
+        pure_profit * 100,
         total_investment,
         total_charge,
         total_investment - total_charge,
         total_share,
         total_assets,
-        total_assets - total_investment + total_charge,
+        total_assets - total_investment + total_charge + total_redeem,
         len(real_invest_data))
 
 
