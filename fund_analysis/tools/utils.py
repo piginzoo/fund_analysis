@@ -1,12 +1,12 @@
 # 抓取网页
-import datetime
+from datetime import datetime
 import logging
 import os
 
 import pandas as pd
 import requests
 
-from fund_analysis.conf import COL_NAME_DATE, DB_DIR, PLAN_DIR, PERIOD_MONTH
+from fund_analysis.conf import COL_NAME_DATE, DB_DIR, DATE_FORMAT
 
 logger = logging.getLogger(__name__)
 
@@ -19,14 +19,18 @@ def get_url(url, proxies=None):
     return rsp.text
 
 
+def str2date(date_str):
+    return datetime.strptime(date_str, DATE_FORMAT)
+
+
 def interval_days(from_date, end_date):
     """
     :param from_date: 格式 2021-04-01
     :param end_date:
     :return:
     """
-    date_from = datetime.datetime.strptime(from_date, "%Y-%m-%d")
-    date_end = datetime.datetime.strptime(end_date, "%Y-%m-%d")
+    date_from = datetime.strptime(from_date, DATE_FORMAT)
+    date_end = datetime.strptime(end_date, DATE_FORMAT)
     interval = date_end - date_from  # 两日期差距
     return interval.days
 
@@ -37,13 +41,16 @@ def get_yesterday():
 
 def get_days_from_now(num):
     """返回从今天开始往前数num天的日期"""
-    today = datetime.datetime.now()
+    today = datetime.now()
     start_date = today - datetime.timedelta(days=num)
-    return datetime.datetime.strftime(start_date, "%Y-%m-%d")
+    return datetime.strftime(start_date, DATE_FORMAT)
 
 
 def init_logger():
-    logging.basicConfig(format='%(asctime)s:%(filename)s:%(lineno)d:%(levelname)s : %(message)s',
+    # logging.basicConfig(format='%(asctime)s:%(filename)s:%(lineno)d:%(levelname)s : %(message)s',
+    #                     level=logging.DEBUG,
+    #                     handlers=[logging.StreamHandler()])
+    logging.basicConfig(format='%(levelname)s : %(message)s',
                         level=logging.DEBUG,
                         handlers=[logging.StreamHandler()])
 
@@ -55,36 +62,15 @@ def load_data(code):
         logger.error("数据文件 %s 不存在", csv_path)
         return None
 
-    df = pd.read_csv(csv_path, index_col=COL_NAME_DATE)
+    dateparse = lambda x: datetime.strptime(x, DATE_FORMAT)
+    df = pd.read_csv(csv_path, index_col=COL_NAME_DATE, parse_dates=True, date_parser=dateparse)
     logger.info("加载了[%s]数据，行数：%d", csv_path, len(df))
     return df
 
 
-def load_plan(path):
-    csv_path = os.path.join(PLAN_DIR, path)
-
-    if not os.path.exists(csv_path):
-        logger.error("定投计划文件 %s 不存在", csv_path)
-        return None
-
-    with open(path,"r",encoding='utf-8') as f:
-        lines = f.readlines()
-        lines = [l.strip() for l in lines]
-
-    # invest_history=[]
-    # for l in lines:
-    #     date,amount = l.split(",")
-    #     if is_date(date):
-    #         invest_history.append([date,float(amount)])
-    #     if l.startswith(PERIOD_MONTH):
-    #
-    #
-    # return df
-
-
 def is_date(text):
     try:
-        dt = datetime.datetime.strptime(text,'%Y-%m-%d' )
+        dt = datetime.strptime(text, DATE_FORMAT)
         return True
     except ValueError:
         return False
