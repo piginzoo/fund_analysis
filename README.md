@@ -35,6 +35,7 @@
 可以参考[命令一览](#命令一览)，来了解如何运行这些功能。
 
 【其他】
+
 此repo有一个关联项目:[基金分析](https://github.com/users/piginzoo/projects/1)，这个项目是github项目，里面提供了需求看板，方便需求更新。
 
 另外，还创建了一个gitbook：[我的金融工具箱](https://finbook.piginzoo.com/)，用来编写我对金融知识的积累。
