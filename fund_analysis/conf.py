@@ -2,7 +2,8 @@ NUM_PER_PAGE = 40
 
 DATE_FORMAT = "%Y-%m-%d"
 
-COL_NAME_DATE = '净值日期'
+COL_DATE = '净值日期'
+COL_UNIT_NET='单位净值'
 COL_ACCUMULATIVE_NET = '累计净值'
 COL_DAILY_RATE = '日增长率'
 

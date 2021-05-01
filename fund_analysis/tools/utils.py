@@ -6,7 +6,7 @@ import os
 import pandas as pd
 import requests
 
-from fund_analysis.conf import COL_NAME_DATE, DB_DIR, DATE_FORMAT
+from fund_analysis.conf import COL_DATE, DB_DIR, DATE_FORMAT
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +69,7 @@ def load_data(code):
     try:
         dateparse = lambda x: datetime.datetime.strptime(x, DATE_FORMAT)
         df = pd.read_csv(csv_path,
-                         index_col=COL_NAME_DATE,
+                         index_col=COL_DATE,
                          parse_dates=True,
                          date_parser=dateparse)
     except:
@@ -89,7 +89,7 @@ def save_data(code, df):
     # reindex the date column and sort it
     df = df.sort_index()
 
-    df.to_csv(data_path, index_label=COL_NAME_DATE)
+    df.to_csv(data_path, index_label=COL_DATE)
     logger.debug("保存了[%s]", data_path)
     return data_path
 

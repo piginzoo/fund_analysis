@@ -5,14 +5,13 @@ import random
 import time
 
 import matplotlib
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from bs4 import BeautifulSoup
 
-from fund_analysis.conf import NUM_PER_PAGE, COL_NAME_DATE
+from fund_analysis.conf import NUM_PER_PAGE, COL_DATE
 from fund_analysis.crawler.helper import get_start_end_date, get_page_num, get_content
-from fund_analysis.tools.utils import load_data, init_logger,save_data
+from fund_analysis.tools.utils import load_data, init_logger, save_data
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +61,6 @@ def parse_html(html):
 def main(code):
     total_data = load_data(code)
 
-
     start_date, end_date = get_start_end_date(code, total_data)
 
     if start_date is None and end_date is None:
@@ -87,8 +85,8 @@ def main(code):
             continue
 
         # 修改数据类型
-        data[COL_NAME_DATE] = pd.to_datetime(data[COL_NAME_DATE], format='%Y/%m/%d')
-        data.set_index(COL_NAME_DATE, inplace=True)
+        data[COL_DATE] = pd.to_datetime(data[COL_DATE], format='%Y/%m/%d')
+        data.set_index(COL_DATE, inplace=True)
         data['单位净值'] = data['单位净值'].astype(float)
         data['累计净值'] = data['累计净值'].astype(float)
         data['日增长率'] = data['日增长率'].str.strip('%').astype(float)
@@ -111,45 +109,6 @@ def main(code):
 
     data_path = save_data(code, total_data)
     logger.info("保存%d行所有数据，到[%s]中", len(total_data), data_path)
-
-
-def show(data):
-    # 获取净值日期、单位净值、累计净值、日增长率等数据并
-    net_value_date = data[COL_NAME_DATE]
-    net_asset_value = data['单位净值']
-    accumulative_net_value = data['累计净值']
-    daily_growth_rate = data['日增长率']
-
-    # 作基金净值图
-    fig = plt.figure()
-    # 坐标轴1
-    ax1 = fig.add_subplot(111)
-    ax1.plot(net_value_date, net_asset_value)
-    ax1.plot(net_value_date, accumulative_net_value)
-    ax1.set_ylabel('净值数据')
-    ax1.set_xlabel('日期')
-    plt.legend(loc='upper left')
-    # 坐标轴2
-    ax2 = ax1.twinx()
-    ax2.plot(net_value_date, daily_growth_rate, 'r')
-    ax2.set_ylabel('日增长率（%）')
-    plt.legend(loc='upper right')
-    plt.title('基金净值数据')
-    plt.show()
-
-    # 绘制分红配送信息图
-    bonus = accumulative_net_value - net_asset_value
-    plt.figure()
-    plt.plot(net_value_date, bonus)
-    plt.xlabel('日期')
-    plt.ylabel('累计净值-单位净值')
-    plt.title('基金“分红”信息')
-    plt.show()
-
-    # 日增长率分析
-    print('日增长率缺失：', sum(np.isnan(daily_growth_rate)))
-    print('日增长率为正的天数：', sum(daily_growth_rate > 0))
-    print('日增长率为负（包含0）的天数：', sum(daily_growth_rate <= 0))
 
 
 # 主程序
