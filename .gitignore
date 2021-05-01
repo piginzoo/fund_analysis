@@ -3,3 +3,4 @@ fund_list.zip
 data/db
 log/
 *.pyc
+/data/simsun.ttc

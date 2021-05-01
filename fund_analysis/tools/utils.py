@@ -22,8 +22,10 @@ def get_url(url, proxies=None):
 def str2date(date_str):
     return datetime.datetime.strptime(date_str, DATE_FORMAT)
 
+
 def date2str(date):
     return date.strftime(DATE_FORMAT)
+
 
 def interval_days(from_date, end_date):
     """
@@ -45,7 +47,7 @@ def get_days_from_now(num):
     """返回从今天开始往前数num天的日期"""
     today = datetime.datetime.now()
     start_date = today - datetime.timedelta(days=num)
-    return start_date.date() # .date() to reset the time to midnight(00:00)
+    return start_date.date()  # .date() to reset the time to midnight(00:00)
 
 
 def init_logger():
@@ -64,16 +66,20 @@ def load_data(code):
         logger.error("数据文件 %s 不存在", csv_path)
         return None
 
-    dateparse = lambda x: datetime.datetime.strptime(x, DATE_FORMAT)
-    df = pd.read_csv(csv_path,
-                     index_col=COL_NAME_DATE,
-                     parse_dates=True,
-                     date_parser=dateparse)
-
-    logger.info("加载了[%s]数据，行数：%d", csv_path, len(df))
+    try:
+        dateparse = lambda x: datetime.datetime.strptime(x, DATE_FORMAT)
+        df = pd.read_csv(csv_path,
+                         index_col=COL_NAME_DATE,
+                         parse_dates=True,
+                         date_parser=dateparse)
+    except:
+        logger.exception("解析[%s]基金数据失败", code)
+        return None
+    # logger.info("加载了[%s]数据，行数：%d", csv_path, len(df))
     return df
 
-def save_data(code,df):
+
+def save_data(code, df):
     dir = DB_DIR
     if not os.path.exists(dir):
         logger.debug("目录[%s]不存在，创建", dir)
