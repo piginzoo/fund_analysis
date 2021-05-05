@@ -7,8 +7,9 @@ COL_UNIT_NET='单位净值'
 COL_ACCUMULATIVE_NET = '累计净值'
 COL_DAILY_RATE = '日增长率'
 
-DB_DIR = 'data/db'
+DB_DIR = 'data/funds'
 PLAN_DIR = 'data/plan'
+CONF_PATH = 'conf/config.yml'
 
 PERIOD_WEEK = 'week'
 PERIOD_DAY = 'day'

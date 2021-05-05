@@ -1,6 +1,8 @@
 .idea/
 fund_list.zip
 data/db
+data/funds
 log/
 *.pyc
 /data/simsun.ttc
+conf/

@@ -5,8 +5,10 @@ import os
 
 import pandas as pd
 import requests
+import yaml
 
-from fund_analysis.conf import COL_DATE, DB_DIR, DATE_FORMAT
+from fund_analysis import const
+from fund_analysis.const import COL_DATE, DB_DIR, DATE_FORMAT
 
 logger = logging.getLogger(__name__)
 
@@ -100,6 +102,17 @@ def is_date(text):
         return True
     except ValueError:
         return False
+
+
+def load_config():
+    if not os.path.exists(const.CONF_PATH):
+        raise ValueError("指定的环境配置文件不存在:" + const.CONF_PATH)
+    f = open(const.CONF_PATH, 'r', encoding='utf-8')
+    result = f.read()
+    # 转换成字典读出来
+    data = yaml.load(result, Loader=yaml.FullLoader)
+    logger.info("读取配置文件:%r", data)
+    return data
 
 
 # python -m fund_analysis.utils

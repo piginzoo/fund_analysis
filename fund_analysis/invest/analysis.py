@@ -13,8 +13,8 @@ This is a automatic investment analysis
 """
 import argparse
 import logging
-from fund_analysis import conf
-from fund_analysis.conf import COL_DAILY_RATE
+from fund_analysis import const
+from fund_analysis.const import COL_DAILY_RATE
 from fund_analysis.tools import utils
 
 logger = logging.getLogger(__name__)
@@ -42,7 +42,7 @@ def calculate(data):
 
 
 def random_caculate(args):
-    files = os.listdir(conf.DB_DIR)
+    files = os.listdir(const.DB_DIR)
     random.shuffle(files)
 
     if args.code:

@@ -2,8 +2,8 @@ import logging
 import os
 import re
 
-from fund_analysis import conf
-from fund_analysis.conf import NUM_PER_PAGE, COL_DATE
+from fund_analysis import const
+from fund_analysis.const import NUM_PER_PAGE, COL_DATE
 from fund_analysis.tools import utils
 from fund_analysis.tools.utils import get_url, init_logger, get_yesterday, get_days_from_now
 

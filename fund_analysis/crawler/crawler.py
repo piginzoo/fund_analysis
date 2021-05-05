@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 from bs4 import BeautifulSoup
 
-from fund_analysis.conf import NUM_PER_PAGE, COL_DATE
+from fund_analysis.const import NUM_PER_PAGE, COL_DATE
 from fund_analysis.crawler.helper import get_start_end_date, get_page_num, get_content
 from fund_analysis.tools.utils import load_data, init_logger, save_data
 

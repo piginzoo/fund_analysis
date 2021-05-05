@@ -29,8 +29,8 @@ import os
 from collections import namedtuple
 from datetime import datetime, timedelta
 
-from fund_analysis import conf
-from fund_analysis.conf import DATE_FORMAT
+from fund_analysis import const
+from fund_analysis.const import DATE_FORMAT
 from fund_analysis.tools import utils
 
 logger = logging.getLogger(__name__)
@@ -59,13 +59,13 @@ def parse_successor_date(period, day, previous_line, next_line, amount):
         date = previous_date + timedelta(days=i)
         date_str = datetime.strftime(date, DATE_FORMAT)
 
-        if period == conf.PERIOD_MONTH and date.day == day:
+        if period == const.PERIOD_MONTH and date.day == day:
             logger.debug("%d月%d日，定投:%f", date.month, date.day, amount)
             records.append(InvestRecord(date=utils.str2date(date_str), amount=amount))
-        if period == conf.PERIOD_WEEK and date.weekday() + 1 == day:
+        if period == const.PERIOD_WEEK and date.weekday() + 1 == day:
             logger.debug("每周%d(%s)，定投:%f", day, date_str, amount)
             records.append(InvestRecord(date=utils.str2date(date_str), amount=amount))
-        if period == conf.PERIOD_DAY:
+        if period == const.PERIOD_DAY:
             records.append(InvestRecord(date=utils.str2date(date_str), amount=amount))
 
     return records
@@ -104,9 +104,9 @@ def load_stream(steam):
             continue
 
         # month_10 => month , 10
-        if date_str.startswith(conf.PERIOD_MONTH) or \
-                date_str.startswith(conf.PERIOD_WEEK) or \
-                date_str.startswith(conf.PERIOD_DAY):
+        if date_str.startswith(const.PERIOD_MONTH) or \
+                date_str.startswith(const.PERIOD_WEEK) or \
+                date_str.startswith(const.PERIOD_DAY):
             period, day = date_str.split("_")
             day = int(day)
             amount = float(amount)

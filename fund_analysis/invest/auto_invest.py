@@ -6,8 +6,8 @@ import argparse
 import logging
 import time
 
-from fund_analysis import conf
-from fund_analysis.conf import COL_ACCUMULATIVE_NET, PERIOD_NAMES
+from fund_analysis import const
+from fund_analysis.const import COL_ACCUMULATIVE_NET, PERIOD_NAMES
 from fund_analysis.tools import utils
 
 logger = logging.getLogger(__name__)
@@ -78,15 +78,15 @@ def filter_invest_by(data, period, day):
             current_month = date.month
 
         # invest everyday
-        if period == conf.PERIOD_DAY:
+        if period == const.PERIOD_DAY:
             indices.append(date)
 
         # only invest at Monday, but wierd is, date.weekday() is from 0 ~ 6
-        if period == conf.PERIOD_WEEK and date.weekday() + 1 == day:
+        if period == const.PERIOD_WEEK and date.weekday() + 1 == day:
             indices.append(date)
 
         # only invest at first day of each month
-        if period == conf.PERIOD_MONTH and date.day >= day:
+        if period == const.PERIOD_MONTH and date.day >= day:
             if date.day == day:
                 indices.append(date)
                 is_invested_this_month = True

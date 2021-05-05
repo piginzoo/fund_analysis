@@ -5,7 +5,7 @@ This is a automatic investment analysis
 import argparse
 import logging
 
-from fund_analysis.conf import COL_ACCUMULATIVE_NET, COL_DATE
+from fund_analysis.const import COL_ACCUMULATIVE_NET, COL_DATE
 from fund_analysis.invest import plan_loader
 from fund_analysis.tools import utils
 

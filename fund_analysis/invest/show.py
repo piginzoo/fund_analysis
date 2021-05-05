@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import pyplot
 
-from fund_analysis.conf import COL_DAILY_RATE, COL_ACCUMULATIVE_NET
+from fund_analysis.const import COL_DAILY_RATE, COL_ACCUMULATIVE_NET
 from fund_analysis.tools import utils
 
 warnings.filterwarnings("ignore")
