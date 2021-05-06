@@ -96,7 +96,7 @@ def main(code):
             logger.debug("基金[%s]不存在，创建[%d]条", code, len(data))
         else:
             total_data = total_data.append(data)
-            print(total_data)
+            # print(total_data)
 
             logger.debug("追加[%d]条到基金[%s]中，合计[%d]条", len(data), code, len(total_data))
 

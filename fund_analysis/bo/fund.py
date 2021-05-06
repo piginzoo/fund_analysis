@@ -31,7 +31,7 @@ class Fund(Base):
     advisor = Column(String(20))  # 基金管理人
     trustee = Column(String(20))  # 基金托管人
     operate_mode = Column(String(20))  # 基金运作方式：开放式基金	封闭式基金	QDII	FOF	ETF	LOF
-    total_asset = Column(Float()) # 总现值
+    total_asset = Column(Float())  # 总现值
 
     __table_args__ = (
         UniqueConstraint('code'),
@@ -59,7 +59,7 @@ class FundStock(Base):
     pub_date = Column(Date())  # 披露日期
 
     __table_args__ = (
-        UniqueConstraint('fund_code','stock_code'),
+        UniqueConstraint('fund_code', 'stock_code'),
     )
 
     # __repr__方法用于输出该类的对象被print()时输出的字符串，如果不想写可以不写
@@ -79,7 +79,7 @@ class StockIndustry(Base):
     industry_name = Column(String(20))  # 行业名称
 
     __table_args__ = (
-        UniqueConstraint('stock_code','industry_code'),
+        UniqueConstraint('stock_code', 'industry_code'),
     )
 
     # __repr__方法用于输出该类的对象被print()时输出的字符串，如果不想写可以不写
@@ -97,7 +97,7 @@ if __name__ == '__main__':
     # 创建数据表。一方面通过engine来连接数据库，另一方面根据哪些类继承了Base来决定创建哪些表
     # checkfirst=True，表示创建表前先检查该表是否存在，如同名表已存在则不再创建。其实默认就是True
     engine = create_engine('sqlite:///data/db/funds.db?check_same_thread=False', echo=True)
-    Base.metadata.drop_all(engine, checkfirst=True)
+    # Base.metadata.drop_all(engine, checkfirst=True)
     Base.metadata.create_all(engine, checkfirst=True)
 
     print("所有的表已经创建...")

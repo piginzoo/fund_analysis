@@ -1,14 +1,14 @@
-# 抓取网页
 import datetime
 import logging
 import os
 
-import pandas as pd
 import requests
 import yaml
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
 from fund_analysis import const
-from fund_analysis.const import COL_DATE, DB_DIR, DATE_FORMAT
+from fund_analysis.const import COL_DATE, FUND_DATA_DIR, DATE_FORMAT
 
 logger = logging.getLogger(__name__)
 
@@ -61,41 +61,6 @@ def init_logger():
                         handlers=[logging.StreamHandler()])
 
 
-def load_data(code):
-    csv_path = os.path.join(DB_DIR, "{}.csv".format(code))
-
-    if not os.path.exists(csv_path):
-        logger.error("数据文件 %s 不存在", csv_path)
-        return None
-
-    try:
-        dateparse = lambda x: datetime.datetime.strptime(x, DATE_FORMAT)
-        df = pd.read_csv(csv_path,
-                         index_col=COL_DATE,
-                         parse_dates=True,
-                         date_parser=dateparse)
-    except:
-        logger.exception("解析[%s]基金数据失败", code)
-        return None
-    # logger.info("加载了[%s]数据，行数：%d", csv_path, len(df))
-    return df
-
-
-def save_data(code, df):
-    dir = DB_DIR
-    if not os.path.exists(dir):
-        logger.debug("目录[%s]不存在，创建", dir)
-        os.makedirs(dir)
-    data_path = os.path.join(dir, "{}.csv".format(code))
-
-    # reindex the date column and sort it
-    df = df.sort_index()
-
-    df.to_csv(data_path, index_label=COL_DATE)
-    logger.debug("保存了[%s]", data_path)
-    return data_path
-
-
 def is_date(text):
     try:
         dt = datetime.datetime.strptime(text, DATE_FORMAT)
@@ -113,6 +78,14 @@ def load_config():
     data = yaml.load(result, Loader=yaml.FullLoader)
     logger.info("读取配置文件:%r", data)
     return data
+
+
+def connect_database():
+    # print('sqlite:///' + const.DB_FILE + '?check_same_thread=False')
+    engine = create_engine('sqlite:///' + const.DB_FILE + '?check_same_thread=False')  # 是否显示SQL：, echo=True)
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    return session
 
 
 # python -m fund_analysis.utils

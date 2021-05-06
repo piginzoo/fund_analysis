@@ -42,7 +42,7 @@ def calculate(data):
 
 
 def random_caculate(args):
-    files = os.listdir(const.DB_DIR)
+    files = os.listdir(const.FUND_DATA_DIR)
     random.shuffle(files)
 
     if args.code:
