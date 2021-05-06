@@ -1,28 +1,37 @@
+import argparse
 import logging
 
-from tqdm import tqdm
-
-from fund_analysis import crawler
-from fund_analysis.tools.utils import load_fund_list
+from fund_analysis import const
+from fund_analysis.crawler.crawler_eastmoney import EastmoneyCrawler
+from fund_analysis.crawler.crawler_jqdata import JQDataCrawler
+from fund_analysis.tools import utils
 
 logger = logging.getLogger(__name__)
 
+"""
+    爬取所有的内容
+"""
 
-def main():
-    fund_list = load_fund_list()
+# python -m fund_analysis.crawler.crawler --code 519778 --data info
+# python -m fund_analysis.crawler.crawler --data info  --num 3
+# python -m fund_analysis.crawler.crawler --data trade
 
-    pbar = tqdm(total=len(fund_list))
-    for fund in fund_list:
-        try:
-            crawler.main(fund.code)
-        except:
-            logger.info("爬取 [%s] : %s 失败！！！", fund.code, fund.name)
-        logger.info("爬取 [%s] : %s 完成", fund.code, fund.name)
-        pbar.update(1)
-    pbar.close()
-
-
-# python -m fund_analysis.main
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--code', '-c', type=str, default=None)
+    parser.add_argument('--data', '-d', type=str, default=None)
+    parser.add_argument('--num', '-n', type=int, default=999999999)
+    args = parser.parse_args()
     utils.init_logger()
-    main()
+
+    crawler = None
+    if args.data == const.CRAWLER_INFO:
+        crawler = JQDataCrawler()
+
+    if args.data == const.CRAWLER_TRADE:
+        crawler = EastmoneyCrawler()
+
+    if args.code:
+        crawler.crawle_one(args.code)
+    else:
+        crawler.crawle_all(args.code, args.num)

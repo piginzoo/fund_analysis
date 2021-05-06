@@ -2,8 +2,10 @@
 
 if [ "$1" == "" ]
 then
-    echo "bin/run.sh --code <基金代码> | all"
-    echo "如：bin/run.sh --code 161725"
+    echo "从天天基金爬取基金日交易数据："
+    echo "bin/crawler.sh --code <基金代码>  --data <trade:日交易|info:相关信息> "
+    echo "如：bin/crawler.sh --code 161725 --data info"
+    echo "如：bin/crawler.sh --data trade"
     exit
 fi
 
@@ -23,4 +25,4 @@ fi
 
 
 echo "爬取 <基金代码>，代码：$*"
-python -m fund_analysis.crawler.crawler $*
+python -m fund_analysis.crawler.main $*

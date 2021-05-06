@@ -32,17 +32,15 @@ def load_fund_data(code):
 
 
 def load_bond_interest_data():
-    csv_path = "data/db/bond_interest_CN1YR.db"
-
     try:
         dateparse = lambda x: datetime.datetime.strptime(x, '%Y年%m月%d日')
-        df = pd.read_csv(csv_path,
+        df = pd.read_csv(const.DB_FILE_BOND_INTEREST,
                          sep="\t",
                          index_col='日期',
                          parse_dates=True,
                          date_parser=dateparse)
     except:
-        logger.exception("解析数据失败")
+        logger.exception("解析[%s]数据失败",const.DB_FILE_BOND_INTEREST)
         return None
 
     print(df.resample('M').mean())
