@@ -1,125 +1,106 @@
-"""
-博迪投资学实践
-"""
-import os
-import random
-
-import matplotlib
-import matplotlib.pyplot as plt
-
-"""
-This is a automatic investment analysis
-
-"""
+# python -m fund_analysis.invest.calculate_sharpe --code 519778 --asset 10 --period month
 import argparse
 import logging
+import time
+
+from tqdm import tqdm
+
 from fund_analysis import const
-from fund_analysis.const import COL_DAILY_RATE
-from fund_analysis.tools import utils
+from fund_analysis.bo.fund import FundStock, StockIndustry
+from fund_analysis.bo.fund_analysis import FundAnalysis
+from fund_analysis.invest.calculate_sharpe import calculate_one_fund
+from fund_analysis.tools import utils, data_utils
 
 logger = logging.getLogger(__name__)
 
 
-def main(args):
-    data = utils.load_data(args.code)
-    calculate(data)
+def main(code, force):
+    session = utils.connect_database()
 
+    fund_list = data_utils.load_fund_list()
 
-def calculate(data):
-    """
-
-    :param data:
-    :return:
-
-    参考：https://blog.csdn.net/robert_chen1988/article/details/80939884
-    """
-
-    rate_data = data[COL_DAILY_RATE]
-    logger.debug("HEAD:%r", rate_data.head())
-    logger.debug(rate_data.describe())
-    # logger.debug(rate_date)
-    logger.debug(rate_data.skew())
-
-
-def random_caculate(args):
-    files = os.listdir(const.FUND_DATA_DIR)
-    random.shuffle(files)
-
-    if args.code:
-        num = 1
-        files = [args.code+".csv"]
+    if code:
+        fund = data_utils.load_fund(code)
+        handle_one_fund(fund, session)
     else:
-        num = args.num
-
-    result = None
-    counter = 0
-    for f in files:
-        code, _ = os.path.splitext(f)
-        data = utils.load_data(code)
-
-        if data is None: continue
-        if len(data) < args.days: continue
-        if counter > num: break
-
-        data = data[[COL_DAILY_RATE]]
-        if result is None:
-            result = data
-        else:
-            # logger.debug("过滤前：%d", len(result))
-            intersection_index = data.index.intersection(result.index)
-            data = data.loc[intersection_index]
-            result = result.loc[intersection_index]
-            # logger.debug("过滤后：%d", len(result))
-            logger.debug("偏度：%r", data.skew())
-            # logger.debug("-------------------")
+        pbar = tqdm(total=len(fund_list))
+        counter = 0
+        error = 0
+        start = time.time()
+        for fund in fund_list:
+            try:
+                handle_one_fund(fund, session, force)
+            except:
+                logger.exception("处理 [%s] 失败...", fund.code)
+                error += 1
+                continue
             counter += 1
-            # logger.debug("Result：%r:%r", result.index[0], result.iloc[0])
-            # logger.debug("Data  ：%r:%r", data.index[0], data.iloc[0])
-            result = result.add(data)
-            # logger.debug("Result：%r:%r", result.index[0], result.iloc[0])
-    # logger.debug(result)
+            pbar.update(1)
+        pbar.close()
+        end = time.time()
 
-    result = result #/ len(result)
-    logger.debug(result.describe())
-    logger.debug(result.info())
-    plot(result[COL_DAILY_RATE])
-
-    logger.debug("从[%d]个基金中筛出[%d]个，跨[%d]天，偏度：%r", len(files), counter, len(result), result.skew())
+        logger.info("合计处理[%d]条，[%d]失败，[%d]成功，平均耗时：%.2f 秒/条",
+                    counter,
+                    error,
+                    counter - error,
+                    (end - start) / counter)
 
 
-def plot(data):
-    # 设置matplotlib正常显示中文和负号
-    matplotlib.rcParams['font.sans-serif'] = ['Arial Unicode MS']
-    matplotlib.rcParams['axes.unicode_minus'] = False  # 正常显示负号
-    # 随机生成（10000,）服从正态分布的数据
-    """
-    绘制直方图
-    data:必选参数，绘图数据
-    bins:直方图的长条形数目，可选项，默认为10
-    normed:是否将得到的直方图向量归一化，可选项，默认为0，代表不归一化，显示频数。normed=1，表示归一化，显示频率。
-    facecolor:长条形的颜色
-    edgecolor:长条形边框的颜色
-    alpha:透明度
-    """
-    plt.hist(data, bins=100, facecolor="blue", edgecolor="black", alpha=0.7)
-    # 显示横轴标签
-    plt.xlabel("区间")
-    # 显示纵轴标签
-    plt.ylabel("频数/频率")
-    # 显示图标题
-    plt.title("频数/频率分布直方图")
-    plt.show()
+def handle_one_fund(fund, session, force=True):
+    fund_analysis = session.query(FundAnalysis).filter(FundAnalysis.code == fund.code).limit(1).first()
+
+    if not force and fund_analysis:
+        logger.info("[%s:%s] 记录已存在，忽略", fund.code, fund.name)
+        return
+
+    create = False
+    if fund_analysis is None:
+        create = True
+        fund_analysis = FundAnalysis()
+
+    fund_stock_industries = session.query(FundStock, StockIndustry). \
+        filter(FundStock.fund_code == fund.code). \
+        filter(FundStock.stock_code == StockIndustry.stock_code). \
+        order_by(FundStock.proportion.desc()). \
+        limit(1).all()
+
+    industry_name = None
+    industry_code = None
+    if len(fund_stock_industries) == 1:
+        fund_stock, stock_industry = fund_stock_industries[0]
+        industry_name = stock_industry.industry_name
+        industry_code = stock_industry.industry_code
+
+    sharpe_ratios = calculate_one_fund(fund, const.FUND_MINIMUM_ASSET, const.PERIOD_ALL, session)
+    if sharpe_ratios is None:
+        # its not mix & stock fund
+        return
+
+    fund_analysis.code = fund.code
+    fund_analysis.name = fund.name
+    fund_analysis.sharpe_year = sharpe_ratios[0]
+    fund_analysis.sharpe_quarter = sharpe_ratios[1]
+    fund_analysis.sharpe_month = sharpe_ratios[2]
+    fund_analysis.sharpe_week = sharpe_ratios[3]
+    fund_analysis.industry_code = industry_code
+    fund_analysis.industry_name = industry_name
+
+    if create:
+        session.add(fund_analysis)
+        session.commit()
+    else:
+        logger.debug("更新")
+        session.flush()
+        session.commit()
 
 
 # python -m fund_analysis.invest.analysis --code 519778
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--code', '-c', type=str, default=None)
-    parser.add_argument('--days', '-d', type=int)
-    parser.add_argument('--num', '-n', type=int)
+    parser.add_argument('--force', '-f', type=str, action='store_true', default=False)
     args = parser.parse_args()
+    code = args.code
 
-    utils.init_logger()
-    logging.getLogger('matplotlib.font_manager').disabled = True
-    # main(args)
-    random_caculate(args)
+    utils.init_logger(logging.INFO)
+    main(args.code, force=args.force)

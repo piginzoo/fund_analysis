@@ -4,6 +4,7 @@ import os
 from collections import namedtuple
 
 import pandas as pd
+from pandas import DataFrame
 
 from fund_analysis import const
 from fund_analysis.const import FUND_DATA_DIR, DATE_FORMAT, COL_DATE
@@ -31,7 +32,12 @@ def load_fund_data(code):
     return df
 
 
-def load_bond_interest_data():
+def load_bond_interest_data(periods):
+    """
+    get the proper bond interests from the given periods
+    :param periods:
+    :return:
+    """
     try:
         dateparse = lambda x: datetime.datetime.strptime(x, '%Y年%m月%d日')
         df = pd.read_csv(const.DB_FILE_BOND_INTEREST,
@@ -40,10 +46,18 @@ def load_bond_interest_data():
                          parse_dates=True,
                          date_parser=dateparse)
     except:
-        logger.exception("解析[%s]数据失败",const.DB_FILE_BOND_INTEREST)
+        logger.exception("解析[%s]数据失败", const.DB_FILE_BOND_INTEREST)
         return None
 
-    print(df.resample('M').mean())
+    interestes = []
+    for date in periods:
+        _day_interestes = df['收盘'].loc[str(date)].values
+        if len(_day_interestes)==0:continue
+        interestes.append([date,_day_interestes[0]])
+
+    df = DataFrame(interestes,columns=['date','rate'])
+    df.set_index(['date'],inplace=True)
+
     return df
 
 
@@ -74,6 +88,13 @@ def load_fund_list():
     return funds
 
 
+def load_fund(code):
+    fund_list = load_fund_list()
+    for fund in fund_list:
+        if fund.code == code: return fund
+    return None
+
+
 def save_fund_data(code, df):
     dir = FUND_DATA_DIR
     if not os.path.exists(dir):
@@ -87,3 +108,15 @@ def save_fund_data(code, df):
     df.to_csv(data_path, index_label=COL_DATE)
     logger.debug("保存了[%s]", data_path)
     return data_path
+
+
+# python -m fund_analysis.tools.date_utils
+if __name__ == '__main__':
+    print(load_bond_interest_data(const.PERIOD_YEAR))
+    print("-----------------------------------")
+    print(load_bond_interest_data(const.PERIOD_QUARTER))
+    print("-----------------------------------")
+    print(load_bond_interest_data(const.PERIOD_MONTH))
+    print("-----------------------------------")
+    print(load_bond_interest_data(const.PERIOD_WEEK))
+    print("-----------------------------------")

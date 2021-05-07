@@ -5,13 +5,16 @@ Base = declarative_base()
 
 
 def get_field_values(obj):
-    f_names = dir(obj)
-    class_name = f.__class__.__name__
+    class_name = obj.__class__.__name__
+
     result = "<" + class_name + "("
+
+    f_names = dir(obj)
     for f_name in f_names:
         if f_name == "metadata": continue
         if f_name == "id": continue
-        result += f_name + "=" + str(getattr(obj, f_name)) + ","
+        if f_name.startswith("_"): continue
+        result += ",{}={}".format(f_name,getattr(obj, f_name))
     result += ")"
     return result
 
@@ -86,18 +89,3 @@ class StockIndustry(Base):
     def __repr__(self):
         return get_field_values(self)
 
-
-# python -m fund_analysis.bo.fund
-if __name__ == '__main__':
-    # 查看映射对应的表
-    Fund.__table__
-    FundStock.__table__
-    StockIndustry.__table__
-
-    # 创建数据表。一方面通过engine来连接数据库，另一方面根据哪些类继承了Base来决定创建哪些表
-    # checkfirst=True，表示创建表前先检查该表是否存在，如同名表已存在则不再创建。其实默认就是True
-    engine = create_engine('sqlite:///data/db/funds.db?check_same_thread=False', echo=True)
-    # Base.metadata.drop_all(engine, checkfirst=True)
-    Base.metadata.create_all(engine, checkfirst=True)
-
-    print("所有的表已经创建...")

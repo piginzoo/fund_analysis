@@ -8,7 +8,7 @@ import numpy as np
 from matplotlib import pyplot
 
 from fund_analysis.const import COL_DAILY_RATE, COL_ACCUMULATIVE_NET
-from fund_analysis.tools import utils
+from fund_analysis.tools import utils, date_utils, data_utils
 
 warnings.filterwarnings("ignore")
 warnings.filterwarnings("ignore", module="matplotlib")
@@ -23,7 +23,7 @@ logging.getLogger('matplotlib').disabled = True
 logger = logging.getLogger(__name__)
 
 
-def show_plot(x_data, y_data, x_label, y_label,tilte):
+def show_plot(x_data, y_data, x_label, y_label, tilte):
     ax1 = plt.gca()
     ax1.plot(x_data, y_data)
     ax1.set_ylabel(y_label)
@@ -54,25 +54,25 @@ def show_hist(data):
 
 
 def main(args):
-    data = utils.load_data(args.code)
+    data = data_utils.load_fund_data(args.code)
     # 获取净值日期、单位净值、累计净值、日增长率等数据
     date = data.index
     accumulative_net_value = data[COL_ACCUMULATIVE_NET]
     daily_growth_rate = data[COL_DAILY_RATE]
 
     plt.subplot(311)
-    show_plot(x_data=date, y_data=accumulative_net_value, x_label='日期', y_label='累计净值',tilte='累计净值')
+    show_plot(x_data=date, y_data=accumulative_net_value, x_label='日期', y_label='累计净值', tilte='累计净值')
     plt.subplot(312)
-    show_plot(x_data=date, y_data=daily_growth_rate, x_label='日期', y_label='日增长率',tilte='日增长率')
+    show_plot(x_data=date, y_data=daily_growth_rate, x_label='日期', y_label='日增长率', tilte='日增长率')
     plt.subplot(313)
     show_hist(data)
 
     logger.info('日增长率 缺失      ：%r', sum(np.isnan(daily_growth_rate)))
     logger.info('日增长率 正天数     ：%r', sum(daily_growth_rate > 0))
     logger.info('日增长率 负天数(<=0)：%r', sum(daily_growth_rate <= 0))
-    logger.info("日收益率 均值      ：%.2f%%", data.mean())
-    logger.info("日收益率 方差      ：%.2f%%", data.var())
-    logger.info("日收益率 偏度      ：%.3f", data.skew())
+    logger.info("日收益率 均值      ：%r", data.mean().values)
+    logger.info("日收益率 方差      ：%r", data.var().values)
+    logger.info("日收益率 偏度      ：%r", data.skew().values)
 
     # set window title
     fig = pyplot.gcf()

@@ -19,12 +19,12 @@ def get_url(url, proxies=None):
     return rsp.text
 
 
-def init_logger():
+def init_logger(level=logging.DEBUG):
     # logging.basicConfig(format='%(asctime)s:%(filename)s:%(lineno)d:%(levelname)s : %(message)s',
     #                     level=logging.DEBUG,
     #                     handlers=[logging.StreamHandler()])
     logging.basicConfig(format='%(levelname)s : %(message)s',
-                        level=logging.DEBUG,
+                        level=level,
                         handlers=[logging.StreamHandler()])
 
 
@@ -39,9 +39,8 @@ def load_config():
     return data
 
 
-def connect_database():
-    # print('sqlite:///' + const.DB_FILE + '?check_same_thread=False')
-    engine = create_engine('sqlite:///' + const.DB_FILE + '?check_same_thread=False')  # 是否显示SQL：, echo=True)
+def connect_database(echo=False):
+    engine = create_engine('sqlite:///' + const.DB_FILE + '?check_same_thread=False',echo=echo)  # 是否显示SQL：, echo=True)
     Session = sessionmaker(bind=engine)
     session = Session()
     return session
