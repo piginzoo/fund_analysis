@@ -262,6 +262,22 @@ INFO :
 * 6、查询基金的行业归属（取持股最多的股票的行业作为基金的行业属性）
 * 7、将结果保存到数据库表[fund_analysis]中
 
+运行完后，可以通过sqlite的客户端，查询行业top10的基金，目前没有写程序，这里先提供SQL方便查询：
+
+```
+SELECT code,name,sharpe_quarter,industry_code,industry_name
+FROM fund_analysis AS fa1
+WHERE code in 
+(
+      SELECT   code
+      FROM     fund_analysis as fa2
+      WHERE    fa2.industry_code = fa1.industry_code
+      ORDER BY fa2.sharpe_quarter desc
+      limit  10
+)
+ORDER BY industry_code, sharpe_quarter desc
+```
+
 # 数据一览
 
 目前数据越来越多，单独在这里列出所有的数据，没去爱你数据都在 [data] 目录下：
@@ -285,12 +301,13 @@ INFO :
 - profit.sh: 用于计算你自己的某只基金的投资收益，需要你编写一个[投资计划](#编写定投文件)
 - show.sh: 用于图像化展示某只基金的数据 
 - create_db.sh: 初始化化的数据库表
+- analysis.sh: 用来分析夏普指数等信息
 
 # 开发日志
 
 ## 2021.5.7
 - 完成了基金的其他数据的爬取，使用jqdata api
-- 完成了夏普和行业分析的代码，
+- 完成了夏普和行业分析的代码，并且保存到了sqlite中
 
 ## 2021.5.1
 增加了图形化显示基金数据的功能
