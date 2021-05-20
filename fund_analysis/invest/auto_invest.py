@@ -8,13 +8,13 @@ import time
 
 from fund_analysis import const
 from fund_analysis.const import COL_ACCUMULATIVE_NET, PERIOD_NAMES
-from fund_analysis.tools import utils
+from fund_analysis.tools import utils, data_utils
 
 logger = logging.getLogger(__name__)
 
 
 def main(args):
-    data = utils.load_data(args.code)
+    data = data_utils.load_fund_data(args.code)
 
     if data is None: return
 

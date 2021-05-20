@@ -7,7 +7,7 @@ import pandas as pd
 from pandas import DataFrame
 
 from fund_analysis import const
-from fund_analysis.const import FUND_DATA_DIR, DATE_FORMAT, COL_DATE
+from fund_analysis.const import FUND_DATA_DIR, INDEX_DATA_DIR, DATE_FORMAT, COL_DATE
 
 logger = logging.getLogger(__name__)
 
@@ -52,13 +52,35 @@ def load_bond_interest_data(periods):
     interestes = []
     for date in periods:
         _day_interestes = df['收盘'].loc[str(date)].values
-        if len(_day_interestes)==0:continue
-        interestes.append([date,_day_interestes[0]])
+        if len(_day_interestes) == 0: continue
+        interestes.append([date, _day_interestes[0]])
 
-    df = DataFrame(interestes,columns=['date','rate'])
-    df.set_index(['date'],inplace=True)
+    df = DataFrame(interestes, columns=['date', 'rate'])
+    df.set_index(['date'], inplace=True)
 
     return df
+
+
+def index_code_by_name(name):
+    for code, index in const.INDEX.items():
+        if index.name == name:
+            return code
+    return None
+
+
+def load_index_data_by_name(name):
+    code = index_code_by_name(name)
+    path = os.path.join(const.INDEX_DATA_DIR, code + ".csv")
+    try:
+        dateparse = lambda x: datetime.datetime.strptime(x, const.DATE_FORMAT)
+        df = pd.read_csv(path,
+                         index_col='date',
+                         parse_dates=True,
+                         date_parser=dateparse)
+        return df
+    except:
+        logger.exception("解析指数数据[%s]失败", path)
+        return None
 
 
 # "000001","HXCZHH","华夏成长混合","混合型","HUAXIACHENGZHANGHUNHE"
@@ -96,16 +118,38 @@ def load_fund(code):
 
 
 def save_fund_data(code, df):
-    dir = FUND_DATA_DIR
+    return save_data(FUND_DATA_DIR, "{}.csv".format(code), df, index_label=COL_DATE)
+
+
+def save_index_data(code, df):
+    return save_data(INDEX_DATA_DIR, "{}.csv".format(code), df, index_label='date')
+
+
+def filter_by_date(target_df, source_df):
+    """
+    用源source_df,去过滤，目标target_df，假设index都是日期
+    """
+    index = source_df.index
+    return target_df.loc[index]
+
+
+def calculate_rate(df, col_name):
+    """根据日期，逐日计算利率：(day2-day1)/day1"""
+    df['rate'] = df[col_name].diff()
+    return df
+
+
+def save_data(dir, file_name, df, index_label):
     if not os.path.exists(dir):
         logger.debug("目录[%s]不存在，创建", dir)
         os.makedirs(dir)
-    data_path = os.path.join(dir, "{}.csv".format(code))
+    data_path = os.path.join(dir, file_name)
 
     # reindex the date column and sort it
+    df.set_index([index_label], inplace=True)
     df = df.sort_index()
 
-    df.to_csv(data_path, index_label=COL_DATE)
+    df.to_csv(data_path, index_label=index_label)
     logger.debug("保存了[%s]", data_path)
     return data_path
 

@@ -1,3 +1,5 @@
+from collections import namedtuple
+
 NUM_PER_PAGE = 40
 
 DATE_FORMAT = "%Y-%m-%d"
@@ -11,6 +13,7 @@ FUND_LIST_FILE = "data/db/fund_list.db"
 DB_FILE_BOND_INTEREST = "data/db/bond_interest_CN1YR.db"
 DB_FILE = 'data/db/funds.db'
 FUND_DATA_DIR = 'data/funds'
+INDEX_DATA_DIR = 'data/index' # 指数数据
 PLAN_DIR = 'data/plan'
 CONF_PATH = 'conf/config.yml'
 
@@ -21,6 +24,20 @@ PERIOD_QUARTER = 'quarter'  # 季度
 PERIOD_YEAR = 'year'  # 季度
 PERIOD_ALL = 'all'  # 周+月+季度+年
 PERIOD_ALL_ITEMS = [PERIOD_YEAR, PERIOD_QUARTER, PERIOD_MONTH, PERIOD_WEEK]
+
+"""
+https://www.joinquant.com/help/api/help#name:index
+"""
+Index = namedtuple('Index', ['name', 'start'])
+INDEX = {
+    '000001.XSHG': Index('上证指数', '1990-12-19'),
+    '399001.XSHE': Index('深圳成指', '1994-7-20'),
+    '399005.XSHE': Index('创业板指', '2010-5-31'),
+    '000016.XSHG': Index('上证50', '2004-1-2'),
+    '000300.XSHG': Index('沪深300', '2005-4-8'),
+    '000905.XSHG': Index('中证500', '2004-12-31')
+}
+
 
 STOCK_INDUSTRY_DEPARTMENT = 'zjw'  # the stock industry class define department
 

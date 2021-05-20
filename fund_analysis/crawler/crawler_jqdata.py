@@ -7,7 +7,6 @@ from sqlalchemy.orm import sessionmaker
 from fund_analysis import const
 from fund_analysis.bo.fund import Fund, FundStock, StockIndustry
 from fund_analysis.crawler.crawler import Crawler
-from fund_analysis.tools import utils
 
 logger = logging.getLogger(__name__)
 
@@ -37,13 +36,6 @@ class JQDataCrawler(Crawler):
         self.login()
         self.session = self.connect_database()
 
-    def login(self):
-        conf = utils.load_config()
-        uid = str(conf['jqdata']['uid'])
-        pwd = conf['jqdata']['pwd']  # 账号是申请时所填写的手机号；密码为聚宽官网登录密码，新申请用户默认为手机号后6位
-        logger.info("用户名:%s,密码：%s", uid, pwd)
-        auth(uid, pwd)
-        logger.info("登录到jqdata成功")
 
     def crawle_fund(self, code, session):
         fund_info = finance.run_query(query(finance.FUND_MAIN_INFO).filter(finance.FUND_MAIN_INFO.main_code == code))
@@ -174,3 +166,5 @@ class JQDataCrawler(Crawler):
         if code.startswith('001'): return code + ".XSHE"
         if code.startswith('002'): return code + ".XSHE"
         return code + ".XSHG"
+
+
