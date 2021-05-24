@@ -7,9 +7,10 @@ import numpy as np
 import pandas as pd
 from bs4 import BeautifulSoup
 
-from fund_analysis.const import NUM_PER_PAGE
+from fund_analysis.const import NUM_PER_PAGE, COL_DATE, COL_DAILY_RATE, COL_ACCUMULATIVE_NET, COL_UNIT_NET
 from fund_analysis.crawler.crawler import Crawler
 from fund_analysis.tools.data_utils import load_fund_data, save_fund_data
+from fund_analysis.tools.date_utils import get_yesterday, get_days_from_now
 from fund_analysis.tools.utils import *
 
 logger = logging.getLogger(__name__)
@@ -17,8 +18,11 @@ logger = logging.getLogger(__name__)
 
 class EastmoneyCrawler(Crawler):
 
-    def crawle_one(self, code):
+    def crawle_one(self, code,force=False):
         total_data = load_fund_data(code)
+        if force:
+            logger.info("强制重新爬取 基金[%s]",code)
+            total_data = None
 
         start_date, end_date = self.get_start_end_date(code, total_data)
 
@@ -44,19 +48,17 @@ class EastmoneyCrawler(Crawler):
                 continue
 
             # 修改数据类型
-            data[COL_DATE] = pd.to_datetime(data[COL_DATE], format='%Y/%m/%d')
-            data.set_index(COL_DATE, inplace=True)
-            data['单位净值'] = data['单位净值'].astype(float)
-            data['累计净值'] = data['累计净值'].astype(float)
-            data['日增长率'] = data['日增长率'].str.strip('%').astype(float)
+            data[COL_DATE] = pd.to_datetime(data[COL_DATE], format=const.DATE_FORMAT)
+            data.set_index([COL_DATE], inplace=True) # 这里需要提前设置一下index，为了和旧数据兼容
+            data[COL_UNIT_NET] = data[COL_UNIT_NET].astype(float)
+            data[COL_ACCUMULATIVE_NET] = data[COL_ACCUMULATIVE_NET].astype(float)
+            data[COL_DAILY_RATE] = data[COL_DAILY_RATE].str.strip('%').astype(float)
 
             if total_data is None:
                 total_data = data
                 logger.debug("基金[%s]不存在，创建[%d]条", code, len(data))
             else:
                 total_data = total_data.append(data)
-                # print(total_data)
-
                 logger.debug("追加[%d]条到基金[%s]中，合计[%d]条", len(data), code, len(total_data))
 
             time.sleep(random.random() * 1)

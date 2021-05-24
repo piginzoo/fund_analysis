@@ -120,7 +120,7 @@ class JQDataCrawler(Crawler):
             self.insert_database(session, stock_industry)
             logger.debug("保存了[%s]的[%s]的信息", fund.name, fund_stock.stock_name)
 
-    def crawle_one(self, code):
+    def crawle_one(self, code, force=False):
         """
         crawle one fund information by its code,
         including: basic info, top-10 stocks and their industries

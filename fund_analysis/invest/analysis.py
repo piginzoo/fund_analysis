@@ -7,14 +7,17 @@ from tqdm import tqdm
 
 from fund_analysis import const
 from fund_analysis.bo.fund import FundStock, StockIndustry
-from fund_analysis.bo.fund_analysis import FundAnalysis
+from fund_analysis.bo.fund_beta import FundBeta
+from fund_analysis.bo.fund_industry import FundIndustry
+from fund_analysis.bo.fund_sharpe import FundSharpe
+from fund_analysis.invest import calculate_beta
 from fund_analysis.invest.calculate_sharpe import calculate_one_fund
 from fund_analysis.tools import utils, data_utils
 
 logger = logging.getLogger(__name__)
 
 
-def main(code, force):
+def main(code):
     session = utils.connect_database()
 
     fund_list = data_utils.load_fund_list()
@@ -29,7 +32,7 @@ def main(code, force):
         start = time.time()
         for fund in fund_list:
             try:
-                handle_one_fund(fund, session, force)
+                handle_one_fund(fund, session)
             except:
                 logger.exception("处理 [%s] 失败...", fund.code)
                 error += 1
@@ -45,18 +48,34 @@ def main(code, force):
                     counter - error,
                     (end - start) / counter)
 
+def handle_beta(fund,session):
 
-def handle_one_fund(fund, session, force=True):
-    fund_analysis = session.query(FundAnalysis).filter(FundAnalysis.code == fund.code).limit(1).first()
+    for _,index in const.INDEX.items():
 
-    if not force and fund_analysis:
-        logger.info("[%s:%s] 记录已存在，忽略", fund.code, fund.name)
-        return
+        fund_beta = session.query(FundBeta).filter(
+            FundBeta.code == fund.code and FundBeta.index_code == index.code).limit(1).first()
 
-    create = False
-    if fund_analysis is None:
-        create = True
-        fund_analysis = FundAnalysis()
+        is_create = False
+        if fund_beta is None:
+            is_create = True
+            fund_beta = FundBeta()
+            fund_beta.code = fund.code
+            fund_beta.name = fund.name
+
+        fund_beta.beta = calculate_beta.calculate(fund.code,index.name)
+        fund_beta.index_name = index.name
+        fund_beta.index_code = index.code
+        save_or_update(session, fund_beta, is_create)
+
+def handle_industry(fund,session):
+    fund_industry = session.query(FundIndustry).filter(FundIndustry.code == fund.code).limit(1).first()
+
+    is_create = False
+    if fund_industry is None:
+        is_create = True
+        fund_industry = FundIndustry()
+        fund_industry.code = fund.code
+        fund_industry.name = fund.name
 
     fund_stock_industries = session.query(FundStock, StockIndustry). \
         filter(FundStock.fund_code == fund.code). \
@@ -64,43 +83,57 @@ def handle_one_fund(fund, session, force=True):
         order_by(FundStock.proportion.desc()). \
         limit(1).all()
 
-    industry_name = None
-    industry_code = None
     if len(fund_stock_industries) == 1:
         fund_stock, stock_industry = fund_stock_industries[0]
-        industry_name = stock_industry.industry_name
-        industry_code = stock_industry.industry_code
+        fund_industry.industry_name = stock_industry.industry_name
+        fund_industry.industry_code = stock_industry.industry_code
+        save_or_update(session,fund_industry,is_create)
 
-    sharpe_ratios = calculate_one_fund(fund, const.FUND_MINIMUM_ASSET, const.PERIOD_ALL, session)
-    if sharpe_ratios is None:
-        # its not mix & stock fund
-        return
+def handle_sharp(fund,session):
 
-    fund_analysis.code = fund.code
-    fund_analysis.name = fund.name
-    fund_analysis.sharpe_year = sharpe_ratios[0]
-    fund_analysis.sharpe_quarter = sharpe_ratios[1]
-    fund_analysis.sharpe_month = sharpe_ratios[2]
-    fund_analysis.sharpe_week = sharpe_ratios[3]
-    fund_analysis.industry_code = industry_code
-    fund_analysis.industry_name = industry_name
+    fund_sharpe = session.query(FundSharpe).filter(FundSharpe.code == fund.code).limit(1).first()
 
-    if create:
-        session.add(fund_analysis)
+    is_create = False
+    if fund_sharpe is None:
+        is_create = True
+        fund_sharpe = FundSharpe()
+        fund_sharpe.code = fund.code
+        fund_sharpe.name = fund.name
+
+    sharpe_ratios = calculate_one_fund(fund, 0, const.PERIOD_ALL, session)
+    if sharpe_ratios is None: return
+
+    fund_sharpe.sharpe_year = sharpe_ratios[0]
+    fund_sharpe.sharpe_quarter = sharpe_ratios[1]
+    fund_sharpe.sharpe_month = sharpe_ratios[2]
+    fund_sharpe.sharpe_week = sharpe_ratios[3]
+
+    save_or_update(session, fund_sharpe, is_create)
+
+def handle_one_fund(fund, session):
+    handle_beta(fund,session)
+    handle_sharp(fund, session)
+    handle_industry(fund, session)
+
+
+def save_or_update(session, dbo, is_create):
+    if is_create:
+        session.add(dbo)
         session.commit()
     else:
         logger.debug("更新")
         session.flush()
         session.commit()
 
-
 # python -m fund_analysis.invest.analysis --code 519778
 if __name__ == '__main__':
+    """
+    --code 基金代码
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument('--code', '-c', type=str, default=None)
-    parser.add_argument('--force', '-f', type=str, action='store_true', default=False)
     args = parser.parse_args()
     code = args.code
 
     utils.init_logger(logging.INFO)
-    main(args.code, force=args.force)
+    main(args.code)

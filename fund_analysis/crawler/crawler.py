@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 class Crawler():
-    def crawle_one(self, code):
+    def crawle_one(self, code,force):
         pass
 
     def crawle_all(self, code, num):

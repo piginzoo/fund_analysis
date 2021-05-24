@@ -1,6 +1,6 @@
 .idea/
 data/funds/
 data/db/
-log/
+logs/
 *.pyc
 conf/

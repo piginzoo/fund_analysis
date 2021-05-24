@@ -25,6 +25,9 @@ def load_fund_data(code):
                          index_col=COL_DATE,
                          parse_dates=True,
                          date_parser=dateparse)
+        if not df.index.is_unique:
+            logger.warning("数据日期重复，删除掉重复日期")
+            df = df.drop_duplicates(inplace=True)
     except:
         logger.exception("解析[%s]基金数据失败", code)
         return None
@@ -87,9 +90,10 @@ def load_index_data_by_name(name):
 FundRecord = namedtuple('FundRecord', ['code', 'name', 'type'])
 
 
-def load_fund_list():
+def load_fund_list(fund_types=None):
     """
     "000001","HXCZHH","华夏成长混合","混合型","HUAXIACHENGZHANGHUNHE"
+    fund_type: 基金类型，汉字，如果是逗号分割，为多种类型
     :return:
     """
     with open(const.FUND_LIST_FILE, "r", encoding='utf-8') as f:
@@ -103,7 +107,13 @@ def load_fund_list():
         code = fund_info[0]
         name = fund_info[2]
         type = fund_info[3]
-        funds.append(FundRecord(code=code, name=name, type=type))
+        if fund_types:
+            fund_types = fund_type.split(",")
+            for fund_type in fund_types:
+                if type==fund_type:
+                    funds.append(FundRecord(code=code, name=name, type=type))
+        else:
+            funds.append(FundRecord(code=code, name=name, type=type))
     return funds
 
     logger.debug("加载了%d行Fund数据", len(lines))
@@ -118,7 +128,7 @@ def load_fund(code):
 
 
 def save_fund_data(code, df):
-    return save_data(FUND_DATA_DIR, "{}.csv".format(code), df, index_label=COL_DATE)
+    return save_data(FUND_DATA_DIR, "{}.csv".format(code), df)
 
 
 def save_index_data(code, df):
@@ -139,14 +149,14 @@ def calculate_rate(df, col_name):
     return df
 
 
-def save_data(dir, file_name, df, index_label):
+def save_data(dir, file_name, df, index_label=None):
     if not os.path.exists(dir):
         logger.debug("目录[%s]不存在，创建", dir)
         os.makedirs(dir)
     data_path = os.path.join(dir, file_name)
 
     # reindex the date column and sort it
-    df.set_index([index_label], inplace=True)
+    if index_label: df.set_index([index_label], inplace=True)
     df = df.sort_index()
 
     df.to_csv(data_path, index_label=index_label)

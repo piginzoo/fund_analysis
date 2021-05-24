@@ -69,9 +69,9 @@ def filter_trade_by_period(data, periods):
 
 
 def calculate_one_fund(fund, asset, period, session):
-    if fund.type != const.KEYWORD_MIX and fund.type != const.KEYWORD_STOCK:
-        logger.warning("基金不是混合&股票型：类型=%s", fund.type)
-        return None
+    # if fund.type != const.KEYWORD_MIX and fund.type != const.KEYWORD_STOCK:
+    #     logger.warning("基金不是混合&股票型：类型=%s", fund.type)
+    #     return None
 
     funds = session.query(Fund).filter(Fund.code == fund.code).all()
     if len(funds) != 1: return None
@@ -92,7 +92,8 @@ def calculate_one_fund(fund, asset, period, session):
 
 
 def calculate_one_fund_by_period(fund, period):
-    if fund.start_date > datetime.strptime('2020-1-1', DATE_FORMAT).date(): return
+    # 不计算今年才开始的基金
+    if fund.start_date > datetime.strptime('2020-1-1', DATE_FORMAT).date(): return None
 
     start_year = fund.start_date.year
     end_year = datetime.now().date().year
@@ -102,6 +103,9 @@ def calculate_one_fund_by_period(fund, period):
         periods += date_utils.get_peroid(year, period)
 
     trade_data = data_utils.load_fund_data(fund.code)
+    if trade_data is None:
+        return None
+
     data = filter_trade_by_period(trade_data, periods)
     logger.debug("过滤出%d条基金净值记录，%r~%r", len(data), data.index[0], data.index[-1])
 

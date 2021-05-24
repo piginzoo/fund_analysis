@@ -20,6 +20,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--code', '-c', type=str, default=None)
     parser.add_argument('--data', '-d', type=str, default=None)
+    parser.add_argument('--force', '-f', action='store_true', dest="force", default=False)
     parser.add_argument('--num', '-n', type=int, default=999999999)
     args = parser.parse_args()
     utils.init_logger()
@@ -27,11 +28,13 @@ if __name__ == '__main__':
     crawler = None
     if args.data == const.CRAWLER_INFO:
         crawler = JQDataCrawler()
-
-    if args.data == const.CRAWLER_TRADE:
+    elif args.data == const.CRAWLER_TRADE:
         crawler = EastmoneyCrawler()
+    else:
+        logger.error("--data 参数必须是'info|trade'")
+        exit()
 
     if args.code:
-        crawler.crawle_one(args.code)
+        crawler.crawle_one(args.code,args.force)
     else:
         crawler.crawle_all(args.code, args.num)

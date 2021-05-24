@@ -28,14 +28,14 @@ PERIOD_ALL_ITEMS = [PERIOD_YEAR, PERIOD_QUARTER, PERIOD_MONTH, PERIOD_WEEK]
 """
 https://www.joinquant.com/help/api/help#name:index
 """
-Index = namedtuple('Index', ['name', 'start'])
+Index = namedtuple('Index', ['code','name', 'start'])
 INDEX = {
-    '000001.XSHG': Index('上证指数', '1990-12-19'),
-    '399001.XSHE': Index('深圳成指', '1994-7-20'),
-    '399005.XSHE': Index('创业板指', '2010-5-31'),
-    '000016.XSHG': Index('上证50', '2004-1-2'),
-    '000300.XSHG': Index('沪深300', '2005-4-8'),
-    '000905.XSHG': Index('中证500', '2004-12-31')
+    '000001.XSHG': Index('000001.XSHG','上证指数', '1990-12-19'),
+    '399001.XSHE': Index('399001.XSHE','深圳成指', '1994-7-20'),
+    '399005.XSHE': Index('399005.XSHE','创业板指', '2010-5-31'),
+    '000016.XSHG': Index('000016.XSHG','上证50', '2004-1-2'),
+    '000300.XSHG': Index('000300.XSHG','沪深300', '2005-4-8'),
+    '000905.XSHG': Index('000905.XSHG','中证500', '2004-12-31')
 }
 
 
