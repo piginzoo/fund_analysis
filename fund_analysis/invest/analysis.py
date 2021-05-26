@@ -32,7 +32,7 @@ def main(code):
         start = time.time()
         for fund in fund_list:
             try:
-                handle_one_fund(fund, session)
+                handle_one_fund(fund, session=False)
             except:
                 logger.exception("处理 [%s] 失败...", fund.code)
                 error += 1
@@ -65,6 +65,9 @@ def handle_beta(fund,session):
         fund_beta.beta = calculate_beta.calculate(fund.code,index.name)
         fund_beta.index_name = index.name
         fund_beta.index_code = index.code
+
+        logger.info("基于指数[%s]计算的beta值：%.3f%%", index.name, fund_beta.beta*100)
+
         save_or_update(session, fund_beta, is_create)
 
 def handle_industry(fund,session):
@@ -87,6 +90,9 @@ def handle_industry(fund,session):
         fund_stock, stock_industry = fund_stock_industries[0]
         fund_industry.industry_name = stock_industry.industry_name
         fund_industry.industry_code = stock_industry.industry_code
+
+        logger.debug("基金所属行业：%s", fund_industry.industry_name)
+
         save_or_update(session,fund_industry,is_create)
 
 def handle_sharp(fund,session):
@@ -111,8 +117,11 @@ def handle_sharp(fund,session):
     save_or_update(session, fund_sharpe, is_create)
 
 def handle_one_fund(fund, session):
+    logger.info("--------------------------------------------------------")
     handle_beta(fund,session)
+    logger.info("--------------------------------------------------------")
     handle_sharp(fund, session)
+    logger.info("--------------------------------------------------------")
     handle_industry(fund, session)
 
 
@@ -121,7 +130,7 @@ def save_or_update(session, dbo, is_create):
         session.add(dbo)
         session.commit()
     else:
-        logger.debug("更新")
+        # logger.debug("更新")
         session.flush()
         session.commit()
 

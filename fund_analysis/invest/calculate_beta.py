@@ -27,6 +27,8 @@ def main(code, index_name):
         calculate(fund.code,index_name,fund.name)
 
 def calculate(code,index_name,fund_name=None):
+
+    # 加载基金数据
     fund_data = data_utils.load_fund_data(code)
     if fund_data is None:
         logger.warning("基金[%s]数据有问题，忽略它...",code)
@@ -34,14 +36,13 @@ def calculate(code,index_name,fund_name=None):
     fund_data = fund_data[[COL_DAILY_RATE]]
     fund_data.columns = [code]
 
+    # 加载指数数据
     index_data = data_utils.load_index_data_by_name(index_name)
     index_data = data_utils.calculate_rate(index_data, 'close')
     index_data = index_data[['rate']] # 只取1列数据:rate
     index_data.columns = [index_name] # rename一下列名
 
     # assert len(fund_data)==len(index_data), "基金数据行数!=指数行数"+str(len(fund_data))+"/"+str(len(index_data))
-    print(fund_data.index.is_unique)
-    print(index_data.index.is_unique)
     # 用concat做表连接，key是index（日期）
     result = pd.concat([fund_data, index_data], axis=1)
     result = result.dropna(how="any", axis=0)
@@ -50,7 +51,6 @@ def calculate(code,index_name,fund_name=None):
     fund_index_cov = result.cov().iloc[0, 1]
     beta = fund_index_cov / index_var
 
-    logger.debug("=============================================")
     logger.debug('基金数量：%d天', len(result))
     logger.debug("指数名称：%s", index_name)
     logger.debug('指数方差：%.4f%%', index_var*100)

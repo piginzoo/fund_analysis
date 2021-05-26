@@ -50,7 +50,7 @@ def filter_trade_by_period(data, periods):
         filter_data = data.loc[start:end]
 
         if len(filter_data) == 0:
-            logger.debug("无法过滤出[%r~%r]的净值数据，忽略", date_utils.date2str(start), date_utils.date2str(end))
+            # logger.debug("无法过滤出[%r~%r]的净值数据，忽略", date_utils.date2str(start), date_utils.date2str(end))
             continue
 
         if len(filter_data) < 3:
@@ -74,7 +74,9 @@ def calculate_one_fund(fund, asset, period, session):
     #     return None
 
     funds = session.query(Fund).filter(Fund.code == fund.code).all()
-    if len(funds) != 1: return None
+    if len(funds) != 1:
+        logger.warning("基金 [%s] 在基金表[funds] 中不存在", fund.name)
+        return None
     fund = funds[0]
 
     if fund.total_asset < asset:
@@ -83,7 +85,7 @@ def calculate_one_fund(fund, asset, period, session):
 
     start_year = date_utils.date2str(fund.start_date)
     end_year = date_utils.date2str(datetime.now().date())
-    logger.info("计算[%s:%s] 从%r~%r期间的夏普指数：", fund.code, fund.name, start_year, end_year)
+    logger.info("[%s:%s] %r~%r 夏普指数：", fund.code, fund.name, start_year, end_year)
 
     if period == const.PERIOD_ALL:
         return [calculate_one_fund_by_period(fund, p) for p in const.PERIOD_ALL_ITEMS]
@@ -92,8 +94,10 @@ def calculate_one_fund(fund, asset, period, session):
 
 
 def calculate_one_fund_by_period(fund, period):
-    # 不计算今年才开始的基金
-    if fund.start_date > datetime.strptime('2020-1-1', DATE_FORMAT).date(): return None
+    # # 不计算今年才开始的基金
+    # if fund.start_date > datetime.strptime('2020-1-1', DATE_FORMAT).date():
+    #     logger.debug("此基金开始日期[%r]，太新了，不具备分析价值")
+    #     return None
 
     start_year = fund.start_date.year
     end_year = datetime.now().date().year
@@ -135,10 +139,10 @@ def calculate_sharpe(fund_rates, bond_interests, period):
     if period == const.PERIOD_WEEK:
         factor = 52
 
-    logger.info("----------------------------")
+    logger.info("--------")
     logger.info("基金[%s]收益均值  ：%.2f%%", const.PERIOD_NAMES[period], fund_rates.mean() * 100)
     logger.info("基金[%s]收益标准差：%.2f%%", const.PERIOD_NAMES[period], fund_rates.std() * 100)
-    logger.info("国债[%s]均基准利率：%.2f%%", const.PERIOD_NAMES[period], bond_interests.mean() / factor)
+    logger.info("国债[%s]基准利率  ：%.2f%%", const.PERIOD_NAMES[period], bond_interests.mean() / factor)
     sharpe_ratio = (fund_rates.mean() * 100 - bond_interests.mean() / factor) / (fund_rates.std() * 100)
     logger.info("按[%s]计算夏普指数：%.2f", const.PERIOD_NAMES[period], sharpe_ratio)
 
@@ -170,5 +174,5 @@ if __name__ == '__main__':
     asset = args.asset * 100000000  # 亿
     period = args.period
 
-    utils.init_logger(logging.INFO)
+    utils.init_logger(logging.DEBUG)
     main(args.code, args.asset, args.period)

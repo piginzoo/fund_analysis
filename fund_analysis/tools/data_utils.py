@@ -28,6 +28,10 @@ def load_fund_data(code):
         if not df.index.is_unique:
             logger.warning("数据日期重复，删除掉重复日期")
             df = df.drop_duplicates(inplace=True)
+
+        if df is None:
+            logger.debug("加载基金数据 [%s] 为空",csv_path)
+
     except:
         logger.exception("解析[%s]基金数据失败", code)
         return None
@@ -72,6 +76,10 @@ def index_code_by_name(name):
 
 
 def load_index_data_by_name(name):
+    """
+    按照基金名称加载指数数据
+    """
+
     code = index_code_by_name(name)
     path = os.path.join(const.INDEX_DATA_DIR, code + ".csv")
     try:
