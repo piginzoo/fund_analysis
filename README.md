@@ -285,13 +285,14 @@ ORDER BY industry_code, sharpe_quarter desc
 
 # 数据一览
 
-目前数据越来越多，单独在这里列出所有的数据，没去爱你数据都在 [data] 目录下：
+目前数据越来越多，单独在这里列出所有的数据，数据都在 [data] 目录下：
 - [funds](data/funds): 以csv文件形式，存放了10000+的基金日净值数据，可以在[百度云盘:提取码bdff](https://pan.baidu.com/s/19m7vbKTYhICRob7pKilydw)下载。
 - [plan](data/plan):存放你自己的投资计划，然后就可以帮助计算这个投资计划的收益率
 - [bond_interest_CN1YR.db](data/db/bond_interest_CN1YR.db):一年期国债的利率数据
 - [fund_list.db](data/db/fund_list.db):存放着所有的基金列表，但是只有很简洁的信息，本质上就是一个csv文本文件
 - [industries.db](data/db/industries.db):存放着所有的行业列表，就是一个csv文本文件，目前没有使用
 - [funds.db](data/db/funds.db):这是sqilite的数据文件，保存在各类关系数据
+- [index](data/index):存放着上证、中证500、沪深300、创业板等多个指数数据
 
 *注：由于数据文件比较大，没有放到git中，可以去[百度云盘:提取码bdff](https://pan.baidu.com/s/19m7vbKTYhICRob7pKilydw)下载相关数据，解压缩到[data]目录下*
 
