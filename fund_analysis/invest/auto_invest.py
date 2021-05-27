@@ -50,6 +50,7 @@ def invest(invest_data, price_of_last_day):
         price_net = invest_data[[COL_ACCUMULATIVE_NET]].iloc[i]
         sum_1_devide_price += 1 / price_net
     profit_percentage = (sum_1_devide_price * price_of_last_day) / len(invest_data)
+
     return profit_percentage
 
 

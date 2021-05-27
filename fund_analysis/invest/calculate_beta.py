@@ -38,7 +38,7 @@ def calculate(code,index_name,fund_name=None):
 
     # 加载指数数据
     index_data = data_utils.load_index_data_by_name(index_name)
-    index_data = data_utils.calculate_rate(index_data, 'close')
+    index_data = data_utils.calculate_rate(index_data, 'close') # 转化成收益率
     index_data = index_data[['rate']] # 只取1列数据:rate
     index_data.columns = [index_name] # rename一下列名
 

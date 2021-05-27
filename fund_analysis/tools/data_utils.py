@@ -8,6 +8,7 @@ from pandas import DataFrame
 
 from fund_analysis import const
 from fund_analysis.const import FUND_DATA_DIR, INDEX_DATA_DIR, DATE_FORMAT, COL_DATE
+from fund_analysis.tools import utils, date_utils
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +21,7 @@ def load_fund_data(code):
         return None
 
     try:
-        dateparse = lambda x: datetime.datetime.strptime(x, DATE_FORMAT)
+        dateparse = lambda x: datetime.datetime.strptime(x, DATE_FORMAT).date()
         df = pd.read_csv(csv_path,
                          index_col=COL_DATE,
                          parse_dates=True,
@@ -30,7 +31,7 @@ def load_fund_data(code):
             df = df.drop_duplicates(inplace=True)
 
         if df is None:
-            logger.debug("加载基金数据 [%s] 为空",csv_path)
+            logger.debug("加载基金数据 [%s] 为空", csv_path)
 
     except:
         logger.exception("解析[%s]基金数据失败", code)
@@ -58,6 +59,7 @@ def load_bond_interest_data(periods):
 
     interestes = []
     for date in periods:
+        print(date)
         _day_interestes = df['收盘'].loc[str(date)].values
         if len(_day_interestes) == 0: continue
         interestes.append([date, _day_interestes[0]])
@@ -118,7 +120,7 @@ def load_fund_list(fund_types=None):
         if fund_types:
             fund_types = fund_type.split(",")
             for fund_type in fund_types:
-                if type==fund_type:
+                if type == fund_type:
                     funds.append(FundRecord(code=code, name=name, type=type))
         else:
             funds.append(FundRecord(code=code, name=name, type=type))
@@ -153,7 +155,11 @@ def filter_by_date(target_df, source_df):
 
 def calculate_rate(df, col_name):
     """根据日期，逐日计算利率：(day2-day1)/day1"""
-    df['rate'] = df[col_name].diff()
+    # rate = (df[col_name] - df[col_name].shift(1)) / df[col_name].shift(1)
+    # pct_change更好使
+    rate = df[col_name].pct_change()
+    rate.iloc[0] = 0  # 第一天收益率强制设为0
+    df['rate'] = rate
     return df
 
 
@@ -172,13 +178,32 @@ def save_data(dir, file_name, df, index_label=None):
     return data_path
 
 
-# python -m fund_analysis.tools.date_utils
+def merge_by_date(df_list: list, selected_col_names=None, new_col_names=None):
+    """
+    按照日期合并几个dataframe，只有日期相同的记录留下来
+    他们都必须使用date日期类型做index
+    """
+
+    if selected_col_names:
+        assert len(selected_col_names) == len(df_list)
+        df_list = [df[name] for df, name in zip(df_list, selected_col_names)]
+
+    for df in df_list:
+        logger.debug("开始[%r]~结束[%r]", date_utils.date2str(df.index[0]), date_utils.date2str(df.index[-1]))
+
+    result = pd.concat(df_list, axis=1)
+    result = result.dropna(how="any", axis=0)
+    logger.debug("开始[%r]~结束[%r] <----- 合并后", date_utils.date2str(result.index[0]), date_utils.date2str(result.index[-1]))
+
+    if new_col_names: result.columns = new_col_names
+
+    return result
+
+
+# python -m fund_analysis.tools.data_utils
 if __name__ == '__main__':
-    print(load_bond_interest_data(const.PERIOD_YEAR))
-    print("-----------------------------------")
-    print(load_bond_interest_data(const.PERIOD_QUARTER))
-    print("-----------------------------------")
-    print(load_bond_interest_data(const.PERIOD_MONTH))
-    print("-----------------------------------")
-    print(load_bond_interest_data(const.PERIOD_WEEK))
-    print("-----------------------------------")
+    utils.init_logger()
+    df = pd.DataFrame([1, 1.1, 1.2, 1.3, 2.6], columns=['test'])
+
+    rates = calculate_rate(df, 'test')
+    print("rates:", rates)

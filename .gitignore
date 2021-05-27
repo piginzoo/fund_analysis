@@ -4,3 +4,4 @@ data/db/
 logs/
 *.pyc
 conf/
+data.zip
