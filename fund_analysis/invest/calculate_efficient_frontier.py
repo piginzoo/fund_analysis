@@ -1,7 +1,12 @@
 """
 计算有效前沿
+[https://zhuanlan.zhihu.com/p/50329231](https://zhuanlan.zhihu.com/p/50329231)
+[https://www.zhihu.com/question/36388336](https://www.zhihu.com/question/36388336)
 """
 import warnings
+
+from fund_analysis.tools import plot_utils
+
 warnings.filterwarnings("ignore", category=UserWarning)
 
 import argparse
@@ -52,7 +57,9 @@ def calculate(data, portfolio_num):
     return df
 
 
-def show(df):
+def show(df):#,df_list):
+
+    # plt.subplot(121)
     plt.style.use('ggplot')
     df.plot.scatter(x='Volatility',
                     y='Returns',
@@ -64,6 +71,12 @@ def show(df):
     plt.xlabel('Volatility (Std. Deviation)')
     plt.ylabel('Expected Returns')
     plt.title('Efficient Frontier')
+
+    # plt.subplot(122)
+    # for df in df_list:
+    #     plot_utils.show_plot(x_data=df.index,
+    #                          y_data=df.)
+
     plt.show()
 
 
@@ -78,8 +91,8 @@ def main(args):
 
 """
 python -m fund_analysis.invest.calculate_efficient_frontier \
---code 519778,000960,519778,151002,162201,180001,040001  \
---sample 5000
+--code 519778,000960,151002,162201,180001,040001  \
+--sample 2000
 """
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
