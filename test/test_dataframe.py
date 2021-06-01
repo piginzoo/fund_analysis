@@ -32,7 +32,23 @@ for col, col_name in enumerate(headers):
 df3.set_index("净值日期",inplace=True)
 df3.to_csv("test.csv",index="净值日期")
 
-## 测试算收益
+## 日期不对齐，也可以按照index相减，酷
+d1= [["2019-01-1", 1],
+     ["2019-01-2", 1],
+     ["2019-01-3", 1]]
+d2= [["2019-01-4", 100],
+     ["2019-01-2", 100],
+     ["2019-01-1", 100]]
+df1 = pd.DataFrame(d1,columns=['date','data1'])
+df1.set_index('date',inplace=True)
+df2 = pd.DataFrame(d2,columns=['date','data2'])
+df2.set_index('date',inplace=True)
+df = (df1.iloc[:,0]-df2.iloc[:,0])
+print("----------")
+df = df.dropna()
+print(df)
+print(type(df))
+
 
 
 

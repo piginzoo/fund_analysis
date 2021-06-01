@@ -33,19 +33,34 @@ def calculate(code,index_name,fund_name=None):
     if fund_data is None:
         logger.warning("基金[%s]数据有问题，忽略它...",code)
         return -999
-    fund_data = fund_data[[COL_DAILY_RATE]]
-    fund_data.columns = [code]
+
+    fund_rate = fund_data[[const.COL_DAILY_RATE]]
 
     # 加载指数数据
     index_data = data_utils.load_index_data_by_name(index_name)
-    index_data = data_utils.calculate_rate(index_data, 'close') # 转化成收益率
-    index_data = index_data[['rate']] # 只取1列数据:rate
-    index_data.columns = [index_name] # rename一下列名
+    index_rate = index_data[['rate']]
+
+    # 加载无风险利率
+    bond_rate = data_utils.load_bond_interest_data()/365
+
+    logger.debug(">基金[%d]行，市场[%d]行，国债[%d]行",len(fund_rate),len(index_data),len(bond_rate))
+    fund_extra_rate = fund_rate.iloc[:,0] - bond_rate.iloc[:,0]
+    fund_extra_rate = fund_extra_rate.dropna()
+    market_extra_rate = index_rate.iloc[:,0] - bond_rate.iloc[:,0]
+    market_extra_rate = market_extra_rate.dropna()
+    print(market_extra_rate)
+    logger.debug("<基金[%d]行，市场[%d]行，国债[%d]行", len(fund_extra_rate), len(market_extra_rate), len(bond_rate))
+
+    if len(fund_extra_rate)==0:
+        logger.warning("过滤后剩余基金数据为0")
+        return -999
 
     # assert len(fund_data)==len(index_data), "基金数据行数!=指数行数"+str(len(fund_data))+"/"+str(len(index_data))
     # 用concat做表连接，key是index（日期）
-    result = pd.concat([fund_data, index_data], axis=1)
-    result = result.dropna(how="any", axis=0)
+    result = data_utils.merge_by_date([fund_extra_rate, market_extra_rate],
+                                      new_col_names=[code,index_name])
+    if len(result)==0:
+        return -999
 
     fund_var, index_var = result.var()
     fund_index_cov = result.cov().iloc[0, 1]
@@ -58,8 +73,8 @@ def calculate(code,index_name,fund_name=None):
         logger.debug('基金名称：%s', fund_name)
     logger.debug('基金代码：%s', code)
     logger.debug('基金方差：%.4f%%', fund_var*100)
-    logger.debug('Beta  值：%.4f%%', beta*100)
-    return beta
+    logger.debug('Beta  值：%.4f', beta)
+    return beta,result
 
 
 # python -m fund_analysis.invest.calculate_beta --code 519778 --index 上证指数

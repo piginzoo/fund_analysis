@@ -40,9 +40,13 @@ def load_fund_data(code):
     return df
 
 
-def load_bond_interest_data(periods):
+def load_bond_interest_data(periods=None):
     """
     get the proper bond interests from the given periods
+            收益率=债券利息/债券价格*100%，是指债券的回报率；简单说，债券价格是上下浮动，
+            如果你买有1000元国债，年利率是5%，那么收益率是5%，如果价格变成950元，
+            那么收益率=5%*1000/950*100%=5.26%，那么它的收益率上升，即收益率与债券价格是负相关。
+            而年利率，也就是债券利息是一经发行就不会变的，而收益率是变化着的。
     :param periods:
     :return:
     """
@@ -57,17 +61,18 @@ def load_bond_interest_data(periods):
         logger.exception("解析[%s]数据失败", const.DB_FILE_BOND_INTEREST)
         return None
 
-    interestes = []
-    for date in periods:
-        print(date)
-        _day_interestes = df['收盘'].loc[str(date)].values
-        if len(_day_interestes) == 0: continue
-        interestes.append([date, _day_interestes[0]])
+    # 按时间过滤
+    if periods: df = df.loc[periods]
 
-    df = DataFrame(interestes, columns=['date', 'rate'])
-    df.set_index(['date'], inplace=True)
+    # interestes = []
+    # for date in periods:
+    #     _day_interestes = df['收盘'].loc[str(date)].values
+    #     if len(_day_interestes) == 0: continue
+    #     interestes.append([date, _day_interestes[0]])
+    # df = DataFrame(interestes, columns=['date', 'rate'])
+    # df.set_index(['date'], inplace=True)
 
-    return df
+    return df[['收盘']]
 
 
 def index_code_by_name(name):
@@ -90,6 +95,11 @@ def load_index_data_by_name(name):
                          index_col='date',
                          parse_dates=True,
                          date_parser=dateparse)
+
+        index_data = calculate_rate(df, 'close')  # 把指数值转化成收益率，代表了市场r_m
+        index_data = index_data[['rate']]  # 只取1列数据:rate
+        index_data.columns = [name]        # rename一下列名
+
         return df
     except:
         logger.exception("解析指数数据[%s]失败", path)
@@ -193,6 +203,9 @@ def merge_by_date(df_list: list, selected_col_names=None, new_col_names=None):
 
     result = pd.concat(df_list, axis=1)
     result = result.dropna(how="any", axis=0)
+    if len(result)==0:
+        logger.warning("按照时间过滤后，记录剩余条数为0")
+        return result
     logger.debug("开始[%r]~结束[%r] <----- 合并后", date_utils.date2str(result.index[0]), date_utils.date2str(result.index[-1]))
 
     if new_col_names: result.columns = new_col_names
