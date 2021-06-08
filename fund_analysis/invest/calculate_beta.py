@@ -16,32 +16,31 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def main(code, index_name):
+def main(code, type,period,index_name):
     if code:
-        return calculate(code, index_name)
+        return calculate(code, type, period,index_name)
 
     fund_list = data_utils.load_fund_list()
     for fund in fund_list:
-        calculate(fund.code, index_name, fund.name)
+        calculate(fund.code, type, period, index_name, fund.name)
 
 
-def calculate(code, type, index_name, fund_name=None):
+def calculate(code, type, period, index_name, fund_name=None):
     # 加载基金数据
     if type == const.FUND:
         data = data_utils.load_fund_data(code)
         if data is None:
             logger.warning("基金[%s]数据有问题，忽略它...", code)
             return -999, None
-        data_rate = data[[const.COL_DAILY_RATE]]
+        data_rate = calculate_rate(data, const.COL_ACCUMULATIVE_NET, period)
     elif type == const.STOCK:
         data = data_utils.load_stock_data(code)
-        data_rate = calculate_rate(data, 'close')
-        data_rate = data_rate['rate']
+        data_rate = calculate_rate(data, 'close', period)
     else:
         raise ValueError("type不合法："+type)
 
     # 加载指数数据
-    index_data = data_utils.load_index_data_by_name(index_name)
+    index_data = data_utils.load_index_data_by_name(index_name,period)
     index_rate = index_data[['rate']]
 
     # 加载无风险利率
@@ -83,15 +82,16 @@ def calculate(code, type, index_name, fund_name=None):
     return beta, result
 
 
-# python -m fund_analysis.invest.calculate_beta --code 519778 --type fund --index 上证指数
+# python -m fund_analysis.invest.calculate_beta --code 519778 --type fund --period week --index 上证指数
 # python -m fund_analysis.invest.calculate_beta --index 上证指数
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--code', '-c', type=str, default=None)
     parser.add_argument('--type', '-t', type=str, default=None)  #
     parser.add_argument('--index', '-n', type=str)
+    parser.add_argument('--period', '-p', type=str)
     args = parser.parse_args()
 
     utils.init_logger()
     logging.getLogger('matplotlib.font_manager').disabled = True
-    main(args.code, args.index)
+    main(args.code, args.type, args.period, args.index)

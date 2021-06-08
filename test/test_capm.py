@@ -6,7 +6,6 @@
 """
 import argparse
 import logging
-import random
 import warnings
 from collections import namedtuple
 
@@ -15,6 +14,7 @@ import statsmodels.api as sm
 
 from fund_analysis.invest import calculate_beta
 from fund_analysis.tools import utils, data_utils
+from fund_analysis import const
 
 warnings.filterwarnings("ignore")
 warnings.filterwarnings("ignore", module="matplotlib")
@@ -26,13 +26,21 @@ logger = logging.getLogger(__name__)
 Result = namedtuple('Result', ['beta', 'result'])
 
 
+PERIOD_NUM={
+    const.PERIOD_DAY:365,
+    const.PERIOD_WEEK: 52,
+    const.PERIOD_MONTH: 12,
+    const.PERIOD_YEAR: 1,
+
+}
+
 def main(args, group_num=3, num_inside_group=3):
-    start, code, type = args.start, args.code, args.type
+    start, code, type, period = args.start, args.code, args.type,args.period
 
     # 加载无风险利率(/365=每天利率）
-    bond_rate = data_utils.load_bond_interest_data() / 365
+    bond_rate = data_utils.load_bond_interest_data() / PERIOD_NUM[period]
 
-    beta, result = calculate_beta.calculate(code, type, '上证指数')
+    beta, result = calculate_beta.calculate(code, type, period, '上证指数')
 
     logger.debug("基金/股票 和 指数 的信息:")
     logger.debug("=======================")
@@ -169,12 +177,13 @@ def plot(x, y, pred):
     plt.show()
 
 
-# python -m test.test_capm --start 2018-1-1 --code 300122 --type stock
+# python -m test.test_capm --start 2018-1-1 --code 300122 --type stock --period week
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--start', '-s', type=str, default=None)
     parser.add_argument('--code', '-c', type=str, default=None)
     parser.add_argument('--type', '-t', type=str, default=None)
+    parser.add_argument('--period', '-p', type=str, default='week')
     args = parser.parse_args()
     utils.init_logger()
     main(args)

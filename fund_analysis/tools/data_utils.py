@@ -93,7 +93,7 @@ def index_code_by_name(name):
     return None
 
 
-def load_index_data_by_name(name):
+def load_index_data_by_name(name,period=const.PERIOD_DAY):
     """
     按照基金名称加载指数数据
     """
@@ -107,11 +107,8 @@ def load_index_data_by_name(name):
                          parse_dates=True,
                          date_parser=dateparse)
 
-        index_data = calculate_rate(df, 'close')  # 把指数值转化成收益率，代表了市场r_m
-        index_data = index_data[['rate']]  # 只取1列数据:rate
-        index_data.columns = [name]  # rename一下列名
-
-        return df
+        index_data = calculate_rate(df,'close',period)  # 把指数值转化成收益率，代表了市场r_m
+        return index_data
     except:
         logger.exception("解析指数数据[%s]失败", path)
         return None
@@ -196,12 +193,13 @@ def calculate_rate(df, col_name, interval=const.PERIOD_DAY):
         rate = df[col_name].pct_change() * 100  # <------ 全部使用%，所以要✖100
         rate.iloc[0] = 0  # 第一天收益率强制设为0
         df['rate'] = rate
-        return df['rate']
+        return df[['rate']]
     else:
         periods = []
         for year in range(const.PERIOD_START_YEAR, datetime.datetime.now().year + 1):
             periods += get_peroid(year, interval)
 
+        # logger.debug("按照[%s]间隔，得到%d个时间区间",interval, len(periods))
         rate_dates = []
         rates = []
         for period in periods:
@@ -215,8 +213,10 @@ def calculate_rate(df, col_name, interval=const.PERIOD_DAY):
             # logger.debug(period_data)
             delta = period_data.iloc[-1][col_name] - period_data.iloc[0][col_name]
             rate = delta*100 / period_data.iloc[0][col_name] # 用百分比，所以✖100
+            # logger.debug("date/rates:%s/%r", start, rate)
             rates.append(rate)
             rate_dates.append(start)
+        # logger.debug("rates:%d",len(rates))
         df = DataFrame(rates, columns=['rate'], index=rate_dates)
         df.index = pd.to_datetime(df.index) # 转成日期类型的index
         return df
@@ -269,18 +269,24 @@ if __name__ == '__main__':
     df = load_fund_data('519778')
 
     df_result = calculate_rate(df, const.COL_ACCUMULATIVE_NET,const.PERIOD_DAY)
-    logger.debug("日收益：%r~%r, %d天",df_result.index[0],df_result.index[-1],len(df))
-    logger.debug(df)
+    logger.debug("日收益：%r~%r, %d天",df_result.index[0],df_result.index[-1],len(df_result))
+    logger.debug(df_result)
+
+    logger.debug("------------------------------")
 
     df_result = calculate_rate(df, const.COL_ACCUMULATIVE_NET, const.PERIOD_WEEK)
-    logger.debug("周收益：%r~%r, %d周",df_result.index[0],df_result.index[-1],len(df))
-    logger.debug(df)
+    logger.debug("周收益：%r~%r, %d周",df_result.index[0],df_result.index[-1],len(df_result))
+    logger.debug(df_result)
+
+    logger.debug("------------------------------")
 
     df_result = calculate_rate(df, const.COL_ACCUMULATIVE_NET, const.PERIOD_MONTH)
-    logger.debug("月收益：%r~%r, %d月",df_result.index[0],df_result.index[-1],len(df))
-    logger.debug(df)
+    logger.debug("月收益：%r~%r, %d月",df_result.index[0],df_result.index[-1],len(df_result))
+    logger.debug(df_result)
+
+    logger.debug("------------------------------")
 
     df_result = calculate_rate(df, const.COL_ACCUMULATIVE_NET, const.PERIOD_YEAR)
-    logger.debug("年收益：%r~%r, %d年",df_result.index[0],df_result.index[-1],len(df))
-    logger.debug(df)
+    logger.debug("年收益：%r~%r, %d年",df_result.index[0],df_result.index[-1],len(df_result))
+    logger.debug(df_result)
 
