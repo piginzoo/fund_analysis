@@ -4,27 +4,29 @@ import os
 from collections import namedtuple
 
 import pandas as pd
+from pandas import DataFrame
 
 from fund_analysis import const
 from fund_analysis.bo.fund import Fund
 from fund_analysis.const import FUND_DATA_DIR, INDEX_DATA_DIR, DATE_FORMAT, COL_DATE, STOCK_DIR
 from fund_analysis.tools import utils, date_utils, jqdata_utils
+from fund_analysis.tools.date_utils import get_peroid
 
 logger = logging.getLogger(__name__)
 
 
 def load_fund_data(code):
     csv_path = os.path.join(FUND_DATA_DIR, "{}.csv".format(code))
-    return load_csv_data(csv_path,index_col=COL_DATE)
+    return load_csv_data(csv_path, index_col=COL_DATE)
 
 
 def load_stock_data(code):
     code = jqdata_utils.get_market_code(code)
     csv_path = os.path.join(STOCK_DIR, "{}.csv".format(code))
-    return load_csv_data(csv_path,index_col='date')
+    return load_csv_data(csv_path, index_col='date')
 
 
-def load_csv_data(csv_path,index_col):
+def load_csv_data(csv_path, index_col):
     if not os.path.exists(csv_path):
         logger.error("数据文件 %s 不存在", csv_path)
         return None
@@ -178,14 +180,46 @@ def filter_by_date(target_df, source_df):
     return target_df.loc[index]
 
 
-def calculate_rate(df, col_name):
-    """根据日期，逐日计算利率：(day2-day1)/day1"""
+def calculate_rate(df, col_name, interval=const.PERIOD_DAY):
+    """
+    根据日期，逐日计算利率：(day2-day1)/day1
+    要求数据的索引，必须是日期类型的
+    @:param interval 周期：日、周、月、年
+    日，就是日，
+    但是周、月、年，如果还要使用日期作为index的话，就要使用第一天做这周、这月、这年的收益率，
+    这样做是为了统一，虽然听上去不合理，
+    """
     # rate = (df[col_name] - df[col_name].shift(1)) / df[col_name].shift(1)
     # pct_change更好使
-    rate = df[col_name].pct_change() * 100  # <------ 全部使用%，所以要✖100
-    rate.iloc[0] = 0  # 第一天收益率强制设为0
-    df['rate'] = rate
-    return df
+
+    if interval == const.PERIOD_DAY:
+        rate = df[col_name].pct_change() * 100  # <------ 全部使用%，所以要✖100
+        rate.iloc[0] = 0  # 第一天收益率强制设为0
+        df['rate'] = rate
+        return df['rate']
+    else:
+        periods = []
+        for year in range(const.PERIOD_START_YEAR, datetime.datetime.now().year + 1):
+            periods += get_peroid(year, interval)
+
+        rate_dates = []
+        rates = []
+        for period in periods:
+            start = period[0]
+            end = period[1]
+            # import pdb
+            # pdb.set_trace()
+            period_data = df.loc[start:end]
+            if len(period_data)==0: continue
+            # logger.debug("%r~%r:%d条",start,end,len(period_data))
+            # logger.debug(period_data)
+            delta = period_data.iloc[-1][col_name] - period_data.iloc[0][col_name]
+            rate = delta*100 / period_data.iloc[0][col_name] # 用百分比，所以✖100
+            rates.append(rate)
+            rate_dates.append(start)
+        df = DataFrame(rates, columns=['rate'], index=rate_dates)
+        df.index = pd.to_datetime(df.index) # 转成日期类型的index
+        return df
 
 
 def save_data(dir, file_name, df, index_label=None):
@@ -232,7 +266,21 @@ def merge_by_date(df_list: list, selected_col_names=None, new_col_names=None):
 # python -m fund_analysis.tools.data_utils
 if __name__ == '__main__':
     utils.init_logger()
-    df = pd.DataFrame([1, 1.1, 1.2, 1.3, 2.6], columns=['test'])
+    df = load_fund_data('519778')
 
-    rates = calculate_rate(df, 'test')
-    print("rates:", rates)
+    df_result = calculate_rate(df, const.COL_ACCUMULATIVE_NET,const.PERIOD_DAY)
+    logger.debug("日收益：%r~%r, %d天",df_result.index[0],df_result.index[-1],len(df))
+    logger.debug(df)
+
+    df_result = calculate_rate(df, const.COL_ACCUMULATIVE_NET, const.PERIOD_WEEK)
+    logger.debug("周收益：%r~%r, %d周",df_result.index[0],df_result.index[-1],len(df))
+    logger.debug(df)
+
+    df_result = calculate_rate(df, const.COL_ACCUMULATIVE_NET, const.PERIOD_MONTH)
+    logger.debug("月收益：%r~%r, %d月",df_result.index[0],df_result.index[-1],len(df))
+    logger.debug(df)
+
+    df_result = calculate_rate(df, const.COL_ACCUMULATIVE_NET, const.PERIOD_YEAR)
+    logger.debug("年收益：%r~%r, %d年",df_result.index[0],df_result.index[-1],len(df))
+    logger.debug(df)
+

@@ -29,6 +29,8 @@ PERIOD_QUARTER = 'quarter'  # 季度
 PERIOD_YEAR = 'year'  # 季度
 PERIOD_ALL = 'all'  # 周+月+季度+年
 PERIOD_ALL_ITEMS = [PERIOD_YEAR, PERIOD_QUARTER, PERIOD_MONTH, PERIOD_WEEK]
+PERIOD_START_YEAR=1980
+
 
 """
 https://www.joinquant.com/help/api/help#name:index
