@@ -2,10 +2,14 @@
 
 if [ "$1" == "" ]
 then
-    echo "从天天基金爬取基金日交易数据："
-    echo "bin/crawler.sh --code <基金代码>  --data <trade:日交易|info:相关信息> [--force]"
-    echo "如：bin/crawler.sh --code 161725 --data info"
-    echo "如：bin/crawler.sh --data trade"
+    echo "从天天基金、或者JQData，爬取交易数据："
+    echo "bin/crawler.sh --code <代码> --type <stock|fund> --sub_type <trade:日交易|info:相关信息> [--force]"
+    echo "爬取基金："
+    echo "如：bin/crawler.sh --code 161725 --type fund --sub_type info"
+    echo "如：bin/crawler.sh --type fund  --sub_type trade "
+    echo "爬取股票："
+    echo "如：bin/crawler.sh --code 300122 --type stock"
+
     exit
 fi
 
@@ -24,5 +28,5 @@ then
 fi
 
 
-echo "爬取 <基金代码>，代码：$*"
+echo "爬取 <代码>，代码：$*"
 python -m fund_analysis.crawler.main $*

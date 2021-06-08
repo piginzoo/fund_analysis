@@ -4,18 +4,27 @@ import os
 from collections import namedtuple
 
 import pandas as pd
-from pandas import DataFrame
 
 from fund_analysis import const
-from fund_analysis.const import FUND_DATA_DIR, INDEX_DATA_DIR, DATE_FORMAT, COL_DATE
-from fund_analysis.tools import utils, date_utils
+from fund_analysis.bo.fund import Fund
+from fund_analysis.const import FUND_DATA_DIR, INDEX_DATA_DIR, DATE_FORMAT, COL_DATE, STOCK_DIR
+from fund_analysis.tools import utils, date_utils, jqdata_utils
 
 logger = logging.getLogger(__name__)
 
 
 def load_fund_data(code):
     csv_path = os.path.join(FUND_DATA_DIR, "{}.csv".format(code))
+    return load_csv_data(csv_path,index_col=COL_DATE)
 
+
+def load_stock_data(code):
+    code = jqdata_utils.get_market_code(code)
+    csv_path = os.path.join(STOCK_DIR, "{}.csv".format(code))
+    return load_csv_data(csv_path,index_col='date')
+
+
+def load_csv_data(csv_path,index_col):
     if not os.path.exists(csv_path):
         logger.error("数据文件 %s 不存在", csv_path)
         return None
@@ -23,7 +32,7 @@ def load_fund_data(code):
     try:
         dateparse = lambda x: datetime.datetime.strptime(x, DATE_FORMAT).date()
         df = pd.read_csv(csv_path,
-                         index_col=COL_DATE,
+                         index_col=index_col,
                          parse_dates=True,
                          date_parser=dateparse)
         if not df.index.is_unique:
@@ -34,7 +43,7 @@ def load_fund_data(code):
             logger.debug("加载基金数据 [%s] 为空", csv_path)
 
     except:
-        logger.exception("解析[%s]基金数据失败", code)
+        logger.exception("解析[%s]数据失败", csv_path)
         return None
     # logger.info("加载了[%s]数据，行数：%d", csv_path, len(df))
     return df
@@ -48,10 +57,10 @@ def load_bond_interest_data(periods=None):
             那么收益率=5%*1000/950*100%=5.26%，那么它的收益率上升，即收益率与债券价格是负相关。
             而年利率，也就是债券利息是一经发行就不会变的，而收益率是变化着的。
     :param periods:
-    :return:
+    :return: 每天的收益率（百分比，比如 2 => 2% =>0.02）
     """
     try:
-        dateparse = lambda x: datetime.datetime.strptime(x, '%Y年%m月%d日')
+        dateparse = lambda x: datetime.datetime.strptime(x, '%Y年%m月%d日').date()
         df = pd.read_csv(const.DB_FILE_BOND_INTEREST,
                          sep="\t",
                          index_col='日期',
@@ -90,7 +99,7 @@ def load_index_data_by_name(name):
     code = index_code_by_name(name)
     path = os.path.join(const.INDEX_DATA_DIR, code + ".csv")
     try:
-        dateparse = lambda x: datetime.datetime.strptime(x, const.DATE_FORMAT)
+        dateparse = lambda x: datetime.datetime.strptime(x, const.DATE_FORMAT).date()
         df = pd.read_csv(path,
                          index_col='date',
                          parse_dates=True,
@@ -98,7 +107,7 @@ def load_index_data_by_name(name):
 
         index_data = calculate_rate(df, 'close')  # 把指数值转化成收益率，代表了市场r_m
         index_data = index_data[['rate']]  # 只取1列数据:rate
-        index_data.columns = [name]        # rename一下列名
+        index_data.columns = [name]  # rename一下列名
 
         return df
     except:
@@ -108,6 +117,12 @@ def load_index_data_by_name(name):
 
 # "000001","HXCZHH","华夏成长混合","混合型","HUAXIACHENGZHANGHUNHE"
 FundRecord = namedtuple('FundRecord', ['code', 'name', 'type'])
+
+
+def load_fund_list_from_db():
+    session = utils.connect_database()
+    funds = session.query(Fund).all()
+    return funds
 
 
 def load_fund_list(fund_types=None):
@@ -167,7 +182,7 @@ def calculate_rate(df, col_name):
     """根据日期，逐日计算利率：(day2-day1)/day1"""
     # rate = (df[col_name] - df[col_name].shift(1)) / df[col_name].shift(1)
     # pct_change更好使
-    rate = df[col_name].pct_change()
+    rate = df[col_name].pct_change() * 100  # <------ 全部使用%，所以要✖100
     rate.iloc[0] = 0  # 第一天收益率强制设为0
     df['rate'] = rate
     return df
@@ -203,10 +218,11 @@ def merge_by_date(df_list: list, selected_col_names=None, new_col_names=None):
 
     result = pd.concat(df_list, axis=1)
     result = result.dropna(how="any", axis=0)
-    if len(result)==0:
+    if len(result) == 0:
         logger.warning("按照时间过滤后，记录剩余条数为0")
         return result
-    logger.debug("开始[%r]~结束[%r] <----- 合并后", date_utils.date2str(result.index[0]), date_utils.date2str(result.index[-1]))
+    logger.debug("开始[%r]~结束[%r] <----- 合并后", date_utils.date2str(result.index[0]),
+                 date_utils.date2str(result.index[-1]))
 
     if new_col_names: result.columns = new_col_names
 

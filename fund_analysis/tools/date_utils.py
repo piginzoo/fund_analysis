@@ -8,7 +8,7 @@ from fund_analysis.const import DATE_FORMAT
 
 
 def str2date(date_str):
-    return datetime.datetime.strptime(date_str, DATE_FORMAT)
+    return datetime.datetime.strptime(date_str, DATE_FORMAT).date()
 
 
 def date2str(date):
@@ -45,15 +45,20 @@ def get_days_from_now(num):
     start_date = today - datetime.timedelta(days=num)
     return start_date.date()  # .date() to reset the time to midnight(00:00)
 
-def get_days(from_date,to_date):
-    from_date = str2date(from_date)
-    to_end = str2date(to_date)
-    delta = to_end - from_date
+
+def get_days(from_date, to_date):
+    if type(from_date) == str:
+        from_date = str2date(from_date)
+    if type(to_date) == str:
+        to_date = str2date(to_date)
+    delta = to_date - from_date
     return delta.days
+
 
 def today():
     today = datetime.datetime.now()
     return date2str(today)
+
 
 def get_peroid(year, period):
     """

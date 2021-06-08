@@ -1,5 +1,8 @@
 from collections import namedtuple
 
+FUND='fund'
+STOCK='stock'
+
 NUM_PER_PAGE = 40
 
 DATE_FORMAT = "%Y-%m-%d"
@@ -16,6 +19,8 @@ FUND_DATA_DIR = 'data/funds'
 INDEX_DATA_DIR = 'data/index' # 指数数据
 PLAN_DIR = 'data/plan'
 CONF_PATH = 'conf/config.yml'
+
+STOCK_DIR = "data/stocks"
 
 PERIOD_DAY = 'day'  # 天
 PERIOD_WEEK = 'week'  # 周
