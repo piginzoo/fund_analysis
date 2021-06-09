@@ -43,11 +43,26 @@ df1 = pd.DataFrame(d1,columns=['date','data1'])
 df1.set_index('date',inplace=True)
 df2 = pd.DataFrame(d2,columns=['date','data2'])
 df2.set_index('date',inplace=True)
+
 df = (df1.iloc[:,0]-df2.iloc[:,0])
 print("----------")
 df = df.dropna()
 print(df)
 print(type(df))
+print("----------------")
+df3 = df1.reindex(df2.index)
+print(df3.dropna())
+
+print("================")
+print("join:")
+df3 = df1.join(df2,how="inner")
+print(df3)
+print("================")
+print(df1)
+df_index= pd.to_datetime(df1.index)
+print(df_index)
+df1.set_index(df_index,inplace=True)
+print(df1.loc['2018-01-1':'2019-01-10'])
 
 
 

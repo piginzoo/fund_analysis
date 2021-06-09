@@ -40,7 +40,7 @@ def main(args, group_num=3, num_inside_group=3):
     # 加载无风险利率(/365=每天利率）
     bond_rate = data_utils.load_bond_interest_data() / PERIOD_NUM[period]
 
-    beta, result = calculate_beta.calculate(code, type, period, '上证指数')
+    beta, result = calculate_beta.calculate_by_cov(code, type, period, '上证指数')
 
     logger.debug("基金/股票 和 指数 的信息:")
     logger.debug("=======================")

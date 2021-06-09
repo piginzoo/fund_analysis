@@ -4,11 +4,11 @@ import os
 from collections import namedtuple
 
 import pandas as pd
-from pandas import DataFrame
+from pandas import DataFrame, Series
 
 from fund_analysis import const
 from fund_analysis.bo.fund import Fund
-from fund_analysis.const import FUND_DATA_DIR, INDEX_DATA_DIR, DATE_FORMAT, COL_DATE, STOCK_DIR
+from fund_analysis.const import FUND_DATA_DIR, INDEX_DATA_DIR, DATE_FORMAT, COL_DATE, STOCK_DIR, COL_RATE
 from fund_analysis.tools import utils, date_utils, jqdata_utils
 from fund_analysis.tools.date_utils import get_peroid
 
@@ -83,6 +83,7 @@ def load_bond_interest_data(periods=None):
     # df = DataFrame(interestes, columns=['date', 'rate'])
     # df.set_index(['date'], inplace=True)
 
+    df.sort_index(inplace=True)
     return df[['收盘']]
 
 
@@ -93,7 +94,7 @@ def index_code_by_name(name):
     return None
 
 
-def load_index_data_by_name(name,period=const.PERIOD_DAY):
+def load_index_data_by_name(name, period=const.PERIOD_DAY):
     """
     按照基金名称加载指数数据
     """
@@ -107,7 +108,8 @@ def load_index_data_by_name(name,period=const.PERIOD_DAY):
                          parse_dates=True,
                          date_parser=dateparse)
 
-        index_data = calculate_rate(df,'close',period)  # 把指数值转化成收益率，代表了市场r_m
+        index_data = calculate_rate(df, 'close', period)  # 把指数值转化成收益率，代表了市场r_m
+        index_data.sort_index(inplace=True)
         return index_data
     except:
         logger.exception("解析指数数据[%s]失败", path)
@@ -177,7 +179,7 @@ def filter_by_date(target_df, source_df):
     return target_df.loc[index]
 
 
-def calculate_rate(df, col_name, interval=const.PERIOD_DAY):
+def calculate_rate(df, col_name, interval=const.PERIOD_DAY, calulate_by='price'):
     """
     根据日期，逐日计算利率：(day2-day1)/day1
     要求数据的索引，必须是日期类型的
@@ -190,10 +192,15 @@ def calculate_rate(df, col_name, interval=const.PERIOD_DAY):
     # pct_change更好使
 
     if interval == const.PERIOD_DAY:
-        rate = df[col_name].pct_change() * 100  # <------ 全部使用%，所以要✖100
-        rate.iloc[0] = 0  # 第一天收益率强制设为0
-        df['rate'] = rate
-        return df[['rate']]
+        if calulate_by == 'price':
+            rate = df[col_name].pct_change() * 100  # <------ 全部使用%，所以要✖100
+            rate.iloc[0] = 0  # 第一天收益率强制设为0
+            df[COL_RATE] = rate
+            return df[[COL_RATE]]
+        else:
+            df = df[[col_name]]
+            df.columns = [COL_RATE]
+            return df
     else:
         periods = []
         for year in range(const.PERIOD_START_YEAR, datetime.datetime.now().year + 1):
@@ -205,21 +212,32 @@ def calculate_rate(df, col_name, interval=const.PERIOD_DAY):
         for period in periods:
             start = period[0]
             end = period[1]
-            # import pdb
-            # pdb.set_trace()
             period_data = df.loc[start:end]
-            if len(period_data)==0: continue
+            if len(period_data) == 0:
+                # logger.debug("按[%r~%r]过滤出0条",start,end)
+                continue
             # logger.debug("%r~%r:%d条",start,end,len(period_data))
             # logger.debug(period_data)
-            delta = period_data.iloc[-1][col_name] - period_data.iloc[0][col_name]
-            rate = delta*100 / period_data.iloc[0][col_name] # 用百分比，所以✖100
+            if calulate_by == 'price':
+                delta = period_data.iloc[-1][col_name] - period_data.iloc[0][col_name]
+                rate = delta * 100 / period_data.iloc[0][col_name]  # 用百分比，所以✖100
+            else:
+                # 直接按照某一列算平均，这个是应对国债的情况，给出的就是利率了，不用你算了，所以去平均即可
+                rate = period_data.mean().values[0]
+                # logger.debug("国债：%r",rate)
             # logger.debug("date/rates:%s/%r", start, rate)
             rates.append(rate)
             rate_dates.append(start)
         # logger.debug("rates:%d",len(rates))
-        df = DataFrame(rates, columns=['rate'], index=rate_dates)
-        df.index = pd.to_datetime(df.index) # 转成日期类型的index
+        df = DataFrame(rates, columns=[COL_RATE], index=rate_dates)
+        df.index = pd.to_datetime(df.index)  # 转成日期类型的index
         return df
+
+def join(df1, df2):
+    if type(df1) == Series: df1 = df1.to_frame()
+    if type(df2) == Series: df2 = df2.to_frame()
+    df12 = df1.join(df2, how="inner", lsuffix="d_")
+    return df12.iloc[:, 0], df12.iloc[:, 1]
 
 
 def save_data(dir, file_name, df, index_label=None):
@@ -268,25 +286,24 @@ if __name__ == '__main__':
     utils.init_logger()
     df = load_fund_data('519778')
 
-    df_result = calculate_rate(df, const.COL_ACCUMULATIVE_NET,const.PERIOD_DAY)
-    logger.debug("日收益：%r~%r, %d天",df_result.index[0],df_result.index[-1],len(df_result))
+    df_result = calculate_rate(df, const.COL_ACCUMULATIVE_NET, const.PERIOD_DAY)
+    logger.debug("日收益：%r~%r, %d天", df_result.index[0], df_result.index[-1], len(df_result))
     logger.debug(df_result)
 
     logger.debug("------------------------------")
 
     df_result = calculate_rate(df, const.COL_ACCUMULATIVE_NET, const.PERIOD_WEEK)
-    logger.debug("周收益：%r~%r, %d周",df_result.index[0],df_result.index[-1],len(df_result))
+    logger.debug("周收益：%r~%r, %d周", df_result.index[0], df_result.index[-1], len(df_result))
     logger.debug(df_result)
 
     logger.debug("------------------------------")
 
     df_result = calculate_rate(df, const.COL_ACCUMULATIVE_NET, const.PERIOD_MONTH)
-    logger.debug("月收益：%r~%r, %d月",df_result.index[0],df_result.index[-1],len(df_result))
+    logger.debug("月收益：%r~%r, %d月", df_result.index[0], df_result.index[-1], len(df_result))
     logger.debug(df_result)
 
     logger.debug("------------------------------")
 
     df_result = calculate_rate(df, const.COL_ACCUMULATIVE_NET, const.PERIOD_YEAR)
-    logger.debug("年收益：%r~%r, %d年",df_result.index[0],df_result.index[-1],len(df_result))
+    logger.debug("年收益：%r~%r, %d年", df_result.index[0], df_result.index[-1], len(df_result))
     logger.debug(df_result)
-
