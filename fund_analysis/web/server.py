@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 @app.route('/', methods=["GET"])
 def demo_index():
-    return render_template("main.html")
+    return render_template("index.html")
 
 
 @app.route('/execute', methods=['POST'])
@@ -46,11 +46,17 @@ def run(command):
     """
     module_name = command.split(" ")[0]
     print(module_name)
-    command_module = __import__(module_name)
+    import importlib
+    command_module = importlib.import_module(module_name)
+    # command_module = __import__(module_name)
     print(command_module)
     command_module.main(command.split(" ")[1:])
     # https://www.zky.name/article/72.html
 
 # python -m fund_analysis.web.server "fund_analysis.analysis.calculate_alpha --code 009549 --type fund --period week --index 上证指数"
+# if __name__ == '__main__':
+#     run(sys.argv[1])
+
 if __name__ == '__main__':
-    run(sys.argv[1])
+    app.config['TEMPLATES_AUTO_RELOAD'] = True
+    app.run()

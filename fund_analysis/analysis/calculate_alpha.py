@@ -29,7 +29,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def main(code, type, period, index_name):
+def run(code, type, period, index_name):
     if code:
         calculate_by_OLS(code, type, period, index_name)
     else:
@@ -154,7 +154,7 @@ def main(args=None):
 
     utils.init_logger()
     logging.getLogger('matplotlib.font_manager').disabled = True
-    main(args.code, args.type, args.period, args.index)
+    run(args.code, args.type, args.period, args.index)
 
 
 # python -m fund_analysis.analysis.calculate_alpha --code 519778 --type fund --period week --index 上证指数

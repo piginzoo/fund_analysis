@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <link rel="stylesheet" href="css/index.css">
+  <script src="https://unpkg.com/vue@3.1.1"></script>
+  <title>首页</title>
+</head>
+
+<body>
+  <div id="app">{{ state }}</div>
+</body>
+
+<script>
+  const { createApp, reactive, toRefs } = Vue;
+  const data = reactive({
+    state: 12
+  })
+  const app = createApp({
+    setup() {
+      return {
+        ...toRefs(data)
+      }
+    }
+  });
+  app.mount("#app");
+</script>
+
+</html>
