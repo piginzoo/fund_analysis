@@ -12,4 +12,4 @@ then
 fi
 
 echo " <基金 $2>：$*"
-python -m fund_analysis.invest.auto_invest $*
+python -m fund_analysis.analysis.auto_invest $*

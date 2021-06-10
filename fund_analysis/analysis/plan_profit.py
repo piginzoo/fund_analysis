@@ -6,7 +6,7 @@ import argparse
 import logging
 
 from fund_analysis.const import COL_ACCUMULATIVE_NET, COL_DATE
-from fund_analysis.invest import plan_loader
+from fund_analysis.analysis import plan_loader
 from fund_analysis.tools import utils
 
 logger = logging.getLogger(__name__)
@@ -68,16 +68,16 @@ def profit(real_invest_data, last_day_price, charge_buy_rate,charge_sell_rate):
 
 def get_real_invest_data(fund_data, invest_records):
     """
-    invest_records actually is virtual invest day, or you can call it fake day,
+    invest_records actually is virtual analysis day, or you can call it fake day,
     because it did not consider the holidays, or weekend,
     so, we need to compare with the real fund data,
     the logic is quiet simple:
     Iterate the invest_records,get current invest_record, compare it with the fund date,
     if not match, just move current fund date to next day,
-    then continue to see whether it is same as current invest day, if not, continue next fund day,
+    then continue to see whether it is same as current analysis day, if not, continue next fund day,
     ...
-    util, the fund day reach to next invest_record day, means, no proper day to invest, give up.
-    if any day matched during the loop, just find the proper invest day.
+    util, the fund day reach to next invest_record day, means, no proper day to analysis, give up.
+    if any day matched during the loop, just find the proper analysis day.
     """
     fund_date_pointer = 0
     invest_date_pointer = 0
@@ -110,7 +110,7 @@ def get_real_invest_data(fund_data, invest_records):
 
 
 def main(args):
-    # get the invest day&amount, but notice, teh day maybe is not a 'real' invest day for holiday or other reasons
+    # get the analysis day&amount, but notice, teh day maybe is not a 'real' analysis day for holiday or other reasons
     logger.debug("加载投资计划：%s", args.plan)
     logger.debug("-----------------------------------")
     invest_records = plan_loader.load(args.plan)
@@ -149,7 +149,7 @@ def main(args):
 
 
 # 30.61%
-# python -m fund_analysis.invest.plan_profit --code 001938 --plan=data/plan/jq_001938.tx
+# python -m fund_analysis.analysis.plan_profit --code 001938 --plan=data/plan/jq_001938.tx
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--code', '-c', type=str)

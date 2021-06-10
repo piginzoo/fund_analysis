@@ -90,7 +90,7 @@ def main(args):
     show(calculated_data)
 
 """
-python -m fund_analysis.invest.calculate_efficient_frontier \
+python -m fund_analysis.analysis.calculate_efficient_frontier \
 --code 519778,000960,151002,162201,180001,040001  \
 --sample 2000
 """

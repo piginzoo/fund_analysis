@@ -12,7 +12,7 @@ from collections import namedtuple
 import matplotlib.pyplot as plt
 import statsmodels.api as sm
 
-from fund_analysis.invest import calculate_beta
+from fund_analysis.analysis import calculate_beta
 from fund_analysis.tools import utils, data_utils
 from fund_analysis import const
 

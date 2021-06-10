@@ -1,4 +1,4 @@
-# python -m fund_analysis.invest.calculate_sharpe --code 519778 --asset 10 --period month
+# python -m fund_analysis.analysis.calculate_sharpe --code 519778 --asset 10 --period month
 import argparse
 import logging
 import time
@@ -10,8 +10,8 @@ from fund_analysis.bo.fund import FundStock, StockIndustry
 from fund_analysis.bo.fund_beta import FundBeta
 from fund_analysis.bo.fund_industry import FundIndustry
 from fund_analysis.bo.fund_sharpe import FundSharpe
-from fund_analysis.invest import calculate_beta
-from fund_analysis.invest.calculate_sharpe import calculate_one_fund
+from fund_analysis.analysis import calculate_beta
+from fund_analysis.analysis.calculate_sharpe import calculate_one_fund
 from fund_analysis.tools import utils, data_utils
 
 logger = logging.getLogger(__name__)
@@ -134,7 +134,7 @@ def save_or_update(session, dbo, is_create):
         session.flush()
         session.commit()
 
-# python -m fund_analysis.invest.analysis --code 519778
+# python -m fund_analysis.analysis.analysis --code 519778
 if __name__ == '__main__':
     """
     --code 基金代码

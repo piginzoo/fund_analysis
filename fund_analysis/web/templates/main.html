@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>图像识别OCR</title>
+        <script type="text/javascript" src="/main/static/js/main.js?v=039"></script>
+        <style type="text/css">
+            table.diff {font-family:Courier; border:medium;}
+            .diff_header {background-color:#e0e0e0}
+            td.diff_header {text-align:right}
+            .diff_next {background-color:#c0c0c0}
+            .diff_add {background-color:#aaffaa}
+            .diff_chg {background-color:#ffff77}
+            .diff_sub {background-color:#ffaaaa}
+
+
+            /*表格样式*/
+            .table_title {
+                font-family: verdana, arial, sans-serif;
+                font-size: 14px;
+                color: #333333;
+                border-width: 1px;
+                border-color: #666666;
+                border-collapse: collapse;
+            }
+
+
+        </style>
+    </head>
+
+	<body>
+    <!--  表单区 -->
+	<div class="container">
+		<div class="card"  align="center" >
+  			<div class="card-body form-horizontal"  align="left" >
+				<form>
+                  <div id="toolbar" class="cs-querylist">
+                     <div class="tx-l pdt30">
+                        <input type="button" class="form-control btn btn-primary" value="识别" id="submit_ocr"/>
+                     </div>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+    <div align="center">
+        <h3 class="title" id="result_title">识别结果</h3>
+        <span align="center" id="request_url"></span>
+    </div>
+
+     <div id="idcard_output" style="display: none">
+        <div align="center">
+            <img id="idcard_image"  width="80%">
+        </div>
+        <div align="center">
+            <table id="idcard_table" border="1" style="table-layer:fixed;min-width:980px;width:80%;margin: 0 auto;">
+              <tr>
+                  <th width="30%">字段key</th>
+                  <th width="70%">字段value</th>
+              </tr>
+            </table>
+        </div>
+    </div>
+    <div></div>
+
+
+    <div class="main-show-text">
+    </div>
+    <div align="center">
+        <div id="detail">
+        </div>
+
+    </div>
+
+    <div style="width:80%;margin: 0 auto;">
+       <pre  id="result_json">{接口返回结果}</pre>
+    </div>
+
+	</body>
+
+</html>

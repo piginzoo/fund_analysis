@@ -163,7 +163,7 @@ def main(code, asset, period):
             logger.info("=============================================")
 
 
-# python -m fund_analysis.invest.calculate_sharpe --code 519778 --asset 10 --period month
+# python -m fund_analysis.analysis.calculate_sharpe --code 519778 --asset 10 --period month
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--code', '-c', type=str, default=None)

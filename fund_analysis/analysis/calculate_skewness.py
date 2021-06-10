@@ -122,8 +122,8 @@ def plot(data):
     plt.show()
 
 
-# python -m fund_analysis.invest.calculate_skewness --code 519778
-# python -m fund_analysis.invest.calculate_skewness --start 2019-1-1 --end 2020-12-31 --num 3
+# python -m fund_analysis.analysis.calculate_skewness --code 519778
+# python -m fund_analysis.analysis.calculate_skewness --start 2019-1-1 --end 2020-12-31 --num 3
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--code', '-c', type=str, default=None)

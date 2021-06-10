@@ -78,15 +78,15 @@ def filter_invest_by(data, period, day):
             is_invested_this_month = False
             current_month = date.month
 
-        # invest everyday
+        # analysis everyday
         if period == const.PERIOD_DAY:
             indices.append(date)
 
-        # only invest at Monday, but wierd is, date.weekday() is from 0 ~ 6
+        # only analysis at Monday, but wierd is, date.weekday() is from 0 ~ 6
         if period == const.PERIOD_WEEK and date.weekday() + 1 == day:
             indices.append(date)
 
-        # only invest by day of each month
+        # only analysis by day of each month
         if period == const.PERIOD_MONTH and date.day >= day:
             if date.day == day:
                 indices.append(date)

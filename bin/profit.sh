@@ -11,4 +11,4 @@ then
     exit
 fi
 
-python -m fund_analysis.invest.plan_profit $*
+python -m fund_analysis.analysis.plan_profit $*

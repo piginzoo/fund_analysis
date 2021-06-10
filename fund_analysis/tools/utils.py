@@ -1,5 +1,7 @@
+import io
 import logging
 import os
+import sys
 
 import requests
 import yaml
@@ -44,3 +46,22 @@ def connect_database(echo=False):
     Session = sessionmaker(bind=engine)
     session = Session()
     return session
+
+
+
+def start_capture_console():
+    logger = logging.getLogger()
+    original_stdout = sys.stdout  # 保存标准输出流
+    original_logger_stdout = logger.handlers[0].stream
+    io_stream = io.StringIO("")
+    sys.stdout = io_stream
+    logger.handlers[0].stream = io_stream
+    return io_stream,original_stdout,original_logger_stdout
+
+def end_capture_console(io_stream,original_stdout,original_logger_stdout):
+    html = io_stream.getvalue()
+    full_html = f'<div class="terminal">\n<pre class="terminal-content">\n{html}\n</pre>\n</div>'
+    logger.handlers[0].stream = original_logger_stdout
+    sys.stdout = original_stdout
+    io_stream.close()
+    return full_html

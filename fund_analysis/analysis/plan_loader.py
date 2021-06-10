@@ -1,19 +1,19 @@
 """
 This implement the investment plans profit calculation.
 
-You need create a invest plan in the folder "<data/plan/xxx.txt>",
-and you can run the <bin/invest.sh> to calculate your profit by providing the file name.
+You need create a analysis plan in the folder "<data/plan/xxx.txt>",
+and you can run the <bin/analysis.sh> to calculate your profit by providing the file name.
 
 the file format is like this:
 ```
     date,+/-amount
-    example: 2019-3-18,1000 <-- means invest 1000$ more
+    example: 2019-3-18,1000 <-- means analysis 1000$ more
              2020-1-5, -2500 <-- means withdraw 2500$
 ```
-there still some special format for money invest description:
+there still some special format for money analysis description:
 - month_X,<amount>
 - week_X,<amount>
-which means, the day for each week or month, I will invest more money, whose amount is <amount>.
+which means, the day for each week or month, I will analysis more money, whose amount is <amount>.
 but if any items below the format contents, means, there are some new break for the routine investment.
 below is the complete example:
 ```
@@ -45,7 +45,7 @@ def parse_successor_date(period, day, previous_line, next_line, amount):
     :param day:
     :param next_date: the next line of stop date
     :param amount:
-    :return: return all invest day and its amount
+    :return: return all analysis day and its amount
     """
     previous_date_str, _ = previous_line.split(",")
     previous_date = datetime.strptime(previous_date_str, DATE_FORMAT)
@@ -128,7 +128,7 @@ def load_stream(steam):
     return records
 
 
-# python -m fund_analysis.invest.plan_loader
+# python -m fund_analysis.analysis.plan_loader
 if __name__ == '__main__':
     utils.init_logger()
     stream = io.StringIO(

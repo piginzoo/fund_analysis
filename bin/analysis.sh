@@ -13,7 +13,7 @@ fi
 if [ "$1" == "all" ]
 then
     echo "分析所有的基金..."
-    python -m fund_analysis.invest.analysis>logs/analysis.log 2>&1 &
+    python -m fund_analysis.analysis.analysis>logs/analysis.log 2>&1 &
     exit
 fi
 
@@ -26,4 +26,4 @@ fi
 
 
 echo "分析基金，代码：$*"
-python -m fund_analysis.invest.analysis $*
+python -m fund_analysis.analysis.analysis $*

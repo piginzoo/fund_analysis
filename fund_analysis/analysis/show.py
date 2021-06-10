@@ -86,7 +86,7 @@ def main(args):
     plt.show()
 
 
-# python -m fund_analysis.invest.show --code 519778
+# python -m fund_analysis.analysis.show --code 519778
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--code', '-c', type=str, default=None)
