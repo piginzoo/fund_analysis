@@ -9,4 +9,6 @@ if [ "$1" = "stop" ]; then
     exit
 fi
 
-python -m fund_analysis.web.server>logs/log.txt 2>&1 &
+
+# python -m fund_analysis.web.server>logs/log.txt 2>&1
+python -m fund_analysis.web.server
