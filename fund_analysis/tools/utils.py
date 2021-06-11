@@ -73,5 +73,5 @@ def export_matplotlib_image_2_base64(plt):
     io_stream = io.BytesIO()
     plt.savefig(io_stream, format='png')
     io_stream.seek(0)
-    base64_data = base64.b64encode(io_stream.read())
+    base64_data = base64.b64encode(io_stream.read()).decode()
     return base64_data
