@@ -1,7 +1,8 @@
 .idea/
-data/funds/
-data/db/
+data/
+data
 logs/
 *.pyc
 conf/
 data.zip
+.DS_Store

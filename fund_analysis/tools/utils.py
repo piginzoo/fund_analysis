@@ -1,3 +1,4 @@
+import base64
 import io
 import logging
 import os
@@ -42,11 +43,10 @@ def load_config():
 
 
 def connect_database(echo=False):
-    engine = create_engine('sqlite:///' + const.DB_FILE + '?check_same_thread=False',echo=echo)  # 是否显示SQL：, echo=True)
+    engine = create_engine('sqlite:///' + const.DB_FILE + '?check_same_thread=False', echo=echo)  # 是否显示SQL：, echo=True)
     Session = sessionmaker(bind=engine)
     session = Session()
     return session
-
 
 
 def start_capture_console():
@@ -56,12 +56,22 @@ def start_capture_console():
     io_stream = io.StringIO("")
     sys.stdout = io_stream
     logger.handlers[0].stream = io_stream
-    return io_stream,original_stdout,original_logger_stdout
+    return io_stream, original_stdout, original_logger_stdout
 
-def end_capture_console(io_stream,original_stdout,original_logger_stdout):
+
+def end_capture_console(io_stream, original_stdout, original_logger_stdout):
+    logger = logging.getLogger()
     html = io_stream.getvalue()
-    full_html = f'<div class="terminal">\n<pre class="terminal-content">\n{html}\n</pre>\n</div>'
+    logger.debug("logger.handlers:%r", logger.handlers)
     logger.handlers[0].stream = original_logger_stdout
     sys.stdout = original_stdout
     io_stream.close()
-    return full_html
+    return html
+
+
+def export_matplotlib_image_2_base64(plt):
+    io_stream = io.BytesIO()
+    plt.savefig(io_stream, format='jpg')
+    io_stream.seek(0)
+    base64_data = base64.b64encode(io_stream.read())
+    return base64_data

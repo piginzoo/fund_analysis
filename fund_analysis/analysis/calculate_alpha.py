@@ -9,6 +9,8 @@ r_i - r_f = alpha_i + beta_i(r_m - r_f) + epsilon_i
 import logging
 import warnings
 
+from fund_analysis.tools.utils import export_matplotlib_image_2_base64
+
 warnings.filterwarnings("ignore")
 warnings.filterwarnings("ignore", module="matplotlib")
 logging.getLogger('matplotlib').disabled = True
@@ -17,6 +19,8 @@ from fund_analysis.const import PERIOD_NUM
 from fund_analysis.tools.data_utils import calculate_rate, join
 import statsmodels.api as sm
 import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('Agg')
 
 """
 This is a automatic investment analysis
@@ -31,7 +35,7 @@ logger = logging.getLogger(__name__)
 
 def run(code, type, period, index_name):
     if code:
-        calculate_by_OLS(code, type, period, index_name)
+        return calculate_by_OLS(code, type, period, index_name)
     else:
         fund_list = data_utils.load_fund_list()
         for fund in fund_list:
@@ -109,7 +113,8 @@ def calculate_by_OLS(code, data_type, period, index_name):
     logger.debug("二元回归计算无风险Alpha：%.4f", regression_alhpa)
     logger.debug("二元回归计算出来的Beta：%.4f", regression_beta)
 
-    plot(x, y, predicts)
+    base64_data = plot(x, y, predicts)
+    return base64_data
 
 
 def plot(x, y, pred):
@@ -139,8 +144,12 @@ def plot(x, y, pred):
     plt.tick_params(top='off', right='off')
     # 添加图例
     plt.legend(loc='upper left')
+
     # 图形展现
-    plt.show()
+    # plt.show()
+    base64_data = export_matplotlib_image_2_base64(plt)
+    logger.debug("图片大小：%d",len(base64_data))
+    return [base64_data]
 
 
 def main(args=None):
@@ -154,7 +163,7 @@ def main(args=None):
 
     utils.init_logger()
     logging.getLogger('matplotlib.font_manager').disabled = True
-    run(args.code, args.type, args.period, args.index)
+    return run(args.code, args.type, args.period, args.index)
 
 
 # python -m fund_analysis.analysis.calculate_alpha --code 519778 --type fund --period week --index 上证指数

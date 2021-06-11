@@ -1,32 +1,30 @@
-<!DOCTYPE html>
-<html lang="en">
-
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <link rel="stylesheet" href="css/index.css">
-  <script src="https://unpkg.com/vue@3.1.1"></script>
-  <title>首页</title>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+    <script src="https://unpkg.com/vue@next"></script>
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/lib/theme-chalk/index.css">
+    <script src="https://unpkg.com/element-plus/lib/index.full.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <title>投资分析</title>
 </head>
-
 <body>
-  <div id="app">{{ state }}</div>
+<div id="app">
+    <el-input v-model="command" placeholder="请输入内容"></el-input>
+    <el-button @click="submit" type="primary" round>提交</el-button>
+    <div>
+        <pre>
+        {{result}}
+        </pre>
+    </div>
+    <div>
+        <li v-for="b64_image in result_base64_images">
+            <img v-bind:src="'data:image/jpeg;base64,'+b64_image" />
+        </li>
+    </div>
+</div>
+<script src="[[ url_for('static',filename='js/index.js') ]]"></script>
 </body>
 
-<script>
-  const { createApp, reactive, toRefs } = Vue;
-  const data = reactive({
-    state: 12
-  })
-  const app = createApp({
-    setup() {
-      return {
-        ...toRefs(data)
-      }
-    }
-  });
-  app.mount("#app");
-</script>
 
 </html>
