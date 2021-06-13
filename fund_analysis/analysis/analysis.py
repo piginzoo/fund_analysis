@@ -62,11 +62,11 @@ def handle_beta(fund,session):
             fund_beta.code = fund.code
             fund_beta.name = fund.name
 
-        fund_beta.beta = calculate_beta.calculate(fund.code,index.name)
+        fund_beta.beta,_ = calculate_beta.calculate_by_cov(fund.code,const.FUND,const.PERIOD_DAY,index.name)
         fund_beta.index_name = index.name
         fund_beta.index_code = index.code
 
-        logger.info("基于指数[%s]计算的beta值：%.3f%%", index.name, fund_beta.beta*100)
+        logger.info("基于指数[%s]计算的beta值：%.3f%%", index.name, fund_beta.beta)
 
         save_or_update(session, fund_beta, is_create)
 

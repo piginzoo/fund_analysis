@@ -73,7 +73,8 @@ def load_bond_interest_data(periods=None):
         return None
 
     # 按时间过滤
-    if periods: df = df.loc[periods]
+
+    if periods is not None: df = df.loc[periods]
 
     # interestes = []
     # for date in periods:

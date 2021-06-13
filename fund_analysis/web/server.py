@@ -7,13 +7,16 @@
 @Time    : 2020/8/28 4:53 下午
 @Version : 1.0
 '''
+import io
 import logging
 import os
 
 from flask import render_template, request, Flask, jsonify
 from werkzeug.routing import BaseConverter
 
+from fund_analysis.analysis.base_calculater import BaseCalculator
 from fund_analysis.tools import utils
+from fund_analysis.tools.dynamic_loader import dynamic_instantiation
 from fund_analysis.tools.utils import start_capture_console, end_capture_console
 
 base_path = os.getcwd()
@@ -42,6 +45,23 @@ app.debug = True
 logger = logging.getLogger(__name__)
 
 
+def init():
+    class_dict = dynamic_instantiation(BaseCalculator)
+    caculator_mapping = {}
+    for _, clazz in class_dict.items():
+        instance = clazz()
+        caculator_mapping[instance.name()] = instance
+    return caculator_mapping
+
+
+CALCULATOR_MAPPING = init()
+
+
+@app.route('/')
+def index():
+    return render_template("/index.html")
+
+
 @app.route('/<regex(".*.html"):url>')
 def html_request(url):
     return render_template(url)
@@ -51,24 +71,47 @@ def html_request(url):
 def execute():
     request_data = request.get_json()
     logger.debug(request_data)
+    calculator_name = request_data['calculator']
     command = request_data['command']
-    logger.debug("需要运行的命令：%s", command)
-    result, base64_images = run(command)
+    logger.debug("需要运行的命令：%s %s", calculator_name, command)
+    result, base64_images = run(calculator_name,command)
     return jsonify({'result': result, 'images': base64_images})
 
 
-def run(command):
+@app.route('/help', methods=['POST'])
+def help():
+    request_data = request.get_json()
+    logger.debug(request_data)
+    name = request_data['name']
+    caculator = CALCULATOR_MAPPING.get(name, None)
+    arg_parser = caculator.get_arg_parser()
+    stream = io.StringIO()
+    arg_parser.print_help(stream)
+    help = stream.getvalue()
+    stream.close()
+    help_list = help.split("\n\n")[1:] # 去掉第一行，没啥用，还导致歧义
+    help = "\n".join(help_list)
+    return jsonify({'help': help})
+
+
+@app.route('/list', methods=['POST'])
+def list():
+    return jsonify({'list': [k for k, v in CALCULATOR_MAPPING.items()]})
+
+
+def run(calculator_name,command):
     """
     fund_analysis.analysis.calculate_alpha --code 009549 --type fund --period week --index 上证指数
     :return:
     """
-    module_name = command.split(" ")[0]
-    import importlib
-    command_module = importlib.import_module(module_name)
+    calculator = CALCULATOR_MAPPING.get(calculator_name,None)
+    if calculator is None:
+        raise ValueError("无效的计算命令名："+calculator_name)
 
     io_stream, original_stdout, original_logger_stdout = start_capture_console()
-    base64_images = command_module.main(command.split(" ")[1:])
+    base64_images = calculator.main(command.strip().split(" "))
     result = end_capture_console(io_stream, original_stdout, original_logger_stdout)
+    # result = "result"
     logger.debug("命令：[%s]\n%s", command, result)
     logger.debug("生成图片：[%d]张", len(base64_images))
 

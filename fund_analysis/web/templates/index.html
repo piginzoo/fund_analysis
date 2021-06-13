@@ -10,11 +10,42 @@
 </head>
 <body>
 <div id="app">
-    <el-input v-model="command" placeholder="请输入内容"></el-input>
-    <el-button @click="submit" type="primary" round>提交</el-button>
-    <div>
+    <el-row>
+        <el-col :sm="2" :lg="2">功能：</el-col>
+        <el-col :sm="22" :lg="22">
+            <el-select v-model="calculator" placeholder="请选择需要执行的功能" @change="select_calculator">
+                <el-option v-for="item in calculators" :value="item">
+                </el-option>
+            </el-select>
+        </el-col>
+    </el-row>
+    <el-row>
+        <el-col :sm="2" :lg="2">帮助：</el-col>
+        <el-col :sm="22" :lg="22">
+                <el-card shadow="always">
+                <pre>
+{{help}}
+                </pre>
+                </el-card>
+        </el-col>
+    </el-row>
+    <el-row>
+        <el-col :sm="2" :lg="2">命令：</el-col>
+        <el-col :sm="22" :lg="22">
+            <el-input v-model="command" placeholder="请输入内容"></el-input>
+        </el-col>
+    </el-row>
+    <el-row>
+        <el-col :sm="2" :lg="2"> </el-col>
+        <el-col :sm="22" :lg="22">
+            <el-button @click="submit" type="primary" round>提交</el-button>
+        </el-col>
+    </el-row>
+
+    结果：
+    <div style="box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1)">
         <pre>
-        {{result}}
+{{result}}
         </pre>
     </div>
     <div>
