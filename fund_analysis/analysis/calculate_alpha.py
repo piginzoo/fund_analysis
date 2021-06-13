@@ -57,13 +57,13 @@ class AlphaCalculater(BaseCalculator):
             data = data_utils.load_fund_data(code)
             if data is None:
                 logger.warning("[%s]数据有问题，忽略它...", code)
-                return -999, None, None
+                raise ValueError("加载数据失败了：" + code)
             data_rate = calculate_rate(data, const.COL_ACCUMULATIVE_NET, period, 'price')
         elif type == const.STOCK:
             data = data_utils.load_stock_data(code)
             data_rate = calculate_rate(data, 'close', period, 'price')
         else:
-            raise ValueError("type不合法：" + type)
+            raise ValueError("类型不合法：必须为stock或fund" + type)
 
         # 加载指数数据
         index_data = data_utils.load_index_data_by_name(index_name, period)

@@ -106,11 +106,18 @@ def run(calculator_name,command):
     """
     calculator = CALCULATOR_MAPPING.get(calculator_name,None)
     if calculator is None:
-        raise ValueError("无效的计算命令名："+calculator_name)
+        raise ValueError("无效的计算命令："+calculator_name)
 
-    io_stream, original_stdout, original_logger_stdout = start_capture_console()
-    base64_images = calculator.main(command.strip().split(" "))
-    result = end_capture_console(io_stream, original_stdout, original_logger_stdout)
+    try:
+        io_stream, original_stdout, original_logger_stdout = start_capture_console()
+        base64_images = calculator.main(command.strip().split(" "))
+        result = end_capture_console(io_stream, original_stdout, original_logger_stdout)
+    except Exception as e:
+        result = end_capture_console(io_stream, original_stdout, original_logger_stdout)
+        logger.debug(result)
+        logger.exception("计算过程发生异常")
+        return "发生异常：" + str(e),[]
+
     # result = "result"
     logger.debug("命令：[%s]\n%s", command, result)
     logger.debug("生成图片：[%d]张", len(base64_images))

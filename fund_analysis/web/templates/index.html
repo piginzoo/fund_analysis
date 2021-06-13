@@ -19,8 +19,9 @@
             </el-select>
         </el-col>
     </el-row>
+
     <el-row>
-        <el-col :sm="2" :lg="2">帮助：</el-col>
+        <el-col :sm="2" :lg="2">参数说明：</el-col>
         <el-col :sm="22" :lg="22">
                 <el-card shadow="always">
                 <pre>
@@ -29,12 +30,14 @@
                 </el-card>
         </el-col>
     </el-row>
+
     <el-row>
-        <el-col :sm="2" :lg="2">命令：</el-col>
+        <el-col :sm="2" :lg="2">参数：</el-col>
         <el-col :sm="22" :lg="22">
             <el-input v-model="command" placeholder="请输入内容"></el-input>
         </el-col>
     </el-row>
+
     <el-row>
         <el-col :sm="2" :lg="2"> </el-col>
         <el-col :sm="22" :lg="22">
@@ -42,17 +45,25 @@
         </el-col>
     </el-row>
 
-    结果：
-    <div style="box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1)">
-        <pre>
+    <el-row>
+        <el-col :sm="2" :lg="2">结果：</el-col>
+        <el-col :sm="22" :lg="22">
+            <pre>
 {{result}}
-        </pre>
-    </div>
-    <div>
+            </pre>
+        </el-col>
+    </el-row>
+
+    <el-row>
+        <el-col :sm="2" :lg="2">图像：</el-col>
+        <el-col :sm="22" :lg="22">
+
         <li v-for="b64_image in result_base64_images">
             <img v-bind:src="'data:image/jpeg;base64,'+b64_image" />
         </li>
-    </div>
+        </el-col>
+    </el-row>
+
 </div>
 <script src="[[ url_for('static',filename='js/index.js') ]]"></script>
 </body>

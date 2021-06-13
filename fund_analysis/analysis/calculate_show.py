@@ -79,6 +79,9 @@ class ShowCalculater(BaseCalculator):
 
     def load_data(self, args):
         data = data_utils.load_fund_data(args.code)
+        if data is None:
+            raise ValueError("数据不存在，代码："+args.code)
+
         # 获取净值日期、单位净值、累计净值、日增长率等数据
         date = data.index
         accumulative_net_value = data[COL_ACCUMULATIVE_NET]
@@ -104,9 +107,8 @@ class ShowCalculater(BaseCalculator):
         return parser
 
 
-# python -m fund_analysis.analysis.show --code 519778
+# python -m fund_analysis.analysis.calculate_show --code 519778
 if __name__ == '__main__':
-    args = parser.parse_args()
-
     utils.init_logger()
-    main(args)
+    calculator = ShowCalculater()
+    calculator.main(args=None,console=True)
