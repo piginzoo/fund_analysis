@@ -20,6 +20,11 @@ import pandas as pd
 from fund_analysis.const import COL_DAILY_RATE
 from fund_analysis.tools import utils, data_utils
 
+
+"""
+用于多只股票、基金组合的有效前沿
+"""
+
 def calculate(data, portfolio_num):
     data_cov = data.cov()
 

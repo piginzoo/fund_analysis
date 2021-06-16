@@ -1,14 +1,15 @@
 from sqlalchemy import Column, Integer, String, UniqueConstraint
 
-from fund_analysis.bo import get_field_values
-from fund_analysis.bo.fund import Base
+from fund_analysis.bo.fund import Base, DBInfoMixin
 
 
-class FundIndustry(Base):
+class FundIndustry(Base, DBInfoMixin):
     """
     基金的分析信息
     """
+
     __tablename__ = 'fund_industry'
+
     id = Column(Integer, primary_key=True, autoincrement=True)
     code = Column(String(100))
     name = Column(String(200))
@@ -19,6 +20,14 @@ class FundIndustry(Base):
         UniqueConstraint('code'),
     )
 
+    def get_column_mapping(self):
+        return {
+            'code': '代码',
+            'name': '名字',
+            'industry_code': '行业代码',
+            'industry_name': '行业名称'
+        }
+
     # __repr__方法用于输出该类的对象被print()时输出的字符串，如果不想写可以不写
     def __repr__(self):
-        return get_field_values(self)
+        return self.get_field_values()

@@ -16,7 +16,12 @@ from fund_analysis.tools import utils, data_utils
 
 logger = logging.getLogger(__name__)
 
-
+"""
+不是用于展示，而是用于计算，跑一遍所有的基金，挨个计算beta，行业，夏普指数
+- beta，用的是估值，而是用的是定义（协方差），而没用回归
+- 行业，直接去找了10大股票中，最大的一只的股票的行业归属
+- 夏普，分别计算了年、季、月的夏普指数
+"""
 def main(code):
     session = utils.connect_database()
 

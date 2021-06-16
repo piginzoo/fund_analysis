@@ -84,7 +84,7 @@ def random_caculate(args):
 
         counter += 1
 
-    logger.debug("最终结果：\n%r", result)
+    # logger.debug("最终结果：\n%r", result)
     logger.debug("=============================================")
     logger.debug("描述    ：\n%r",result.describe())
     logger.debug("=============================================")

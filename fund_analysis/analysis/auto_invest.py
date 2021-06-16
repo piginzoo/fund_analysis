@@ -12,6 +12,9 @@ from fund_analysis.tools import utils, data_utils
 
 logger = logging.getLogger(__name__)
 
+"""
+用于计算定投的收益率
+"""
 
 def main(args):
     data = data_utils.load_fund_data(args.code)

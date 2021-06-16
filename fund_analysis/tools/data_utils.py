@@ -109,9 +109,9 @@ def load_index_data_by_name(name, period=const.PERIOD_DAY):
                          parse_dates=True,
                          date_parser=dateparse)
 
-        index_data = calculate_rate(df, 'close', period)  # 把指数值转化成收益率，代表了市场r_m
-        index_data.sort_index(inplace=True)
-        return index_data
+        # index_data = calculate_rate(df, 'close', period)  # 把指数值转化成收益率，代表了市场r_m
+        df.sort_index(inplace=True)
+        return df
     except:
         logger.exception("解析指数数据[%s]失败", path)
         return None
@@ -235,6 +235,9 @@ def calculate_rate(df, col_name, interval=const.PERIOD_DAY, calulate_by='price')
         return df
 
 def join(df1, df2):
+    """
+    按照日期，找出日期重叠的数据
+    """
     if type(df1) == Series: df1 = df1.to_frame()
     if type(df2) == Series: df2 = df2.to_frame()
     df12 = df1.join(df2, how="inner", lsuffix="d_")
@@ -262,8 +265,8 @@ def merge_by_date(df_list: list, selected_col_names=None, new_col_names=None):
     他们都必须使用date日期类型做index
     """
 
-    if selected_col_names:
-        assert len(selected_col_names) == len(df_list)
+    if selected_col_names is not None:
+        assert len(selected_col_names) == len(df_list), str(selected_col_names)+"/"+str(len(df_list))
         df_list = [df[name] for df, name in zip(df_list, selected_col_names)]
 
     for df in df_list:
@@ -276,6 +279,7 @@ def merge_by_date(df_list: list, selected_col_names=None, new_col_names=None):
         return result
     logger.debug("开始[%r]~结束[%r] <----- 合并后", date_utils.date2str(result.index[0]),
                  date_utils.date2str(result.index[-1]))
+
 
     if new_col_names: result.columns = new_col_names
 

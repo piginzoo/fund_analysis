@@ -1,6 +1,8 @@
 import io
 import logging
 
+import matplotlib
+
 from fund_analysis.tools import utils
 from fund_analysis.tools.utils import export_matplotlib_image_2_base64
 
@@ -45,8 +47,10 @@ class BaseCalculator(metaclass=ABCMeta):
 
         # 图形展现
         if console:
+            matplotlib.use('TkAgg')
             plt.show()
         else:
+            matplotlib.use('Agg')
             base64_data = export_matplotlib_image_2_base64(plt)
             logger.debug("图片大小：%d", len(base64_data))
             return [base64_data]

@@ -1,5 +1,6 @@
 import argparse
 import logging
+import math
 import warnings
 
 import matplotlib
@@ -8,8 +9,11 @@ import numpy as np
 from matplotlib import pyplot
 
 from fund_analysis.analysis.base_calculater import BaseCalculator
+from fund_analysis.bo.fund import Fund, FundStock
+from fund_analysis.bo.fund_industry import FundIndustry
 from fund_analysis.const import COL_DAILY_RATE, COL_ACCUMULATIVE_NET
 from fund_analysis.tools import utils, data_utils
+from fund_analysis.tools.date_utils import get_days
 
 warnings.filterwarnings("ignore")
 warnings.filterwarnings("ignore", module="matplotlib")
@@ -30,11 +34,28 @@ class ShowCalculater(BaseCalculator):
         return "Show:展示股票/基金的基本信息"
 
     def plot(self, data):
-        date, data, accumulative_net_value, daily_growth_rate = data
+        date, data, accumulative_net_value, daily_growth_rate, index_close_price = data
         plt.subplot(311)
-        self.show_plot(x_data=date, y_data=accumulative_net_value, x_label='日期', y_label='累计净值', tilte='累计净值')
+
+        # 合并一下基金和指数数据
+        fund_index_data = data_utils.merge_by_date([accumulative_net_value, index_close_price])
+        fund_index_data[[COL_ACCUMULATIVE_NET]] = fund_index_data[[COL_ACCUMULATIVE_NET]] / fund_index_data[
+            [COL_ACCUMULATIVE_NET]].max()
+        fund_index_data[['close']] = fund_index_data[['close']] / fund_index_data[['close']].max()
+
+        self.show_plot(x_data=fund_index_data.index,
+                       y_data=fund_index_data,
+                       x_label='日期',
+                       y_label='累计净值',
+                       tilte='累计净值',
+                       labels=['基金', '指数'])
+
         plt.subplot(312)
-        self.show_plot(x_data=date, y_data=daily_growth_rate, x_label='日期', y_label='日增长率', tilte='日增长率')
+        self.show_plot(x_data=date,
+                       y_data=daily_growth_rate,
+                       x_label='日期',
+                       y_label='日增长率',
+                       tilte='日增长率')
         plt.subplot(313)
         self.show_hist(data)
 
@@ -49,12 +70,13 @@ class ShowCalculater(BaseCalculator):
         # plt.show()
         return plt
 
-    def show_plot(self, x_data, y_data, x_label, y_label, tilte):
+    def show_plot(self, x_data, y_data, x_label, y_label, tilte, labels=[]):
         ax1 = plt.gca()
         ax1.plot(x_data, y_data)
         ax1.set_ylabel(y_label)
-        # ax1.set_xlabel(x_label)
+        ax1.set_xlabel(x_label)
         ax1.legend(loc='upper left')
+        plt.legend(labels=labels, loc='best')
         plt.title(tilte)
 
     def show_hist(self, data):
@@ -80,26 +102,89 @@ class ShowCalculater(BaseCalculator):
     def load_data(self, args):
         data = data_utils.load_fund_data(args.code)
         if data is None:
-            raise ValueError("数据不存在，代码："+args.code)
+            raise ValueError("数据不存在，代码：" + args.code)
 
         # 获取净值日期、单位净值、累计净值、日增长率等数据
         date = data.index
         accumulative_net_value = data[COL_ACCUMULATIVE_NET]
         daily_growth_rate = data[COL_DAILY_RATE]
 
-        return date, data, accumulative_net_value, daily_growth_rate
+        index_data = data_utils.load_index_data_by_name('上证指数')
+        index_data = index_data[['close']]
+
+        self.load_info(args.code)
+
+        return date, data, accumulative_net_value, daily_growth_rate, index_data
+
+    def load_info(self, code):
+        session = utils.connect_database()
+
+        def format(bo):
+            if type(bo) == list:
+                # contens = "\n".join([format(__bo) for __bo in bo])
+                # return contens
+                for __bo in bo:
+                    format(__bo)
+            else:
+                info = bo.get_info()
+                # contents = [str(k) + ":\t" + str(v) for k, v in info.items()]
+                # contents = "\n".join(contents)
+                # return contents
+                for k, v in info.items():
+                    logger.info("%r : %r",k,v)
+
+        fund = session.query(Fund).filter(Fund.code == code).limit(1).first()
+        fund_industries = session.query(FundStock).filter(FundStock.fund_code == code).all()
+        fund_stocks = session.query(FundIndustry).filter(FundIndustry.code == code).all()
+        logger.info("------------------------------")
+        format(fund)
+        logger.info("------------------------------")
+        format(fund_industries)
+        logger.info("------------------------------")
+        format(fund_stocks)
 
     def calculate(self, _data):
-        date, data, accumulative_net_value, daily_growth_rate = _data
+        date, data, accumulative_net_value, daily_growth_rate, index_close_price = _data
 
         logger.info('日增长率 缺失      ：%r', sum(np.isnan(daily_growth_rate)))
         logger.info('日增长率 正天数     ：%r', sum(daily_growth_rate > 0))
         logger.info('日增长率 负天数(<=0)：%r', sum(daily_growth_rate <= 0))
-        logger.info("日收益率 均值      ：%r", data.mean().values)
-        logger.info("日收益率 方差      ：%r", data.var().values)
-        logger.info("日收益率 偏度      ：%r", data.skew().values)
+        logger.info("日收益率 均值      ：%.4f", data[[COL_DAILY_RATE]].mean().values[0])
+        logger.info("日收益率 方差      ：%.4f", data[[COL_DAILY_RATE]].var().values[0])
+        logger.info("日收益率 偏度      ：%.4f", data[[COL_DAILY_RATE]].skew().values[0])
+        logger.info("最大回撤率         ：%.4f",self.calculate_withdraw(data[[COL_ACCUMULATIVE_NET]]))
+        logger.info("年平均投资回报率    ：%.4f", self.calculate_AAGR(data[[COL_ACCUMULATIVE_NET]]))
 
         return _data
+
+    def calculate_withdraw(self,data):
+        """
+        最大回撤：先找到最低的价格，然后往前回溯，最高的价格，然后计算回撤率
+        """
+        print(data,type(data))
+        min_index = data.idxmin()
+        print(min_index,type(min_index))
+        max_index = data[:min_index].idxmax()
+        withdraw_rate = (data.loc(max_index)-data.loc(min_index))/data.loc(max_index)
+        return withdraw_rate
+
+    def calculate_AAGR(self,data):
+        """
+        计算平均年化收益率
+        # 参考： https://zhuanlan.zhihu.com/p/63121208
+        (期末/期初)^(1/周期) - 1，周期可以是分数，比如是3.2，具体就不推导了
+        2020.5.1 ~ 2021.3.6 , 计算出delta，
+        # 对银行存款、票据、债券等D=360日，对于股票、期货等市场D=250日，对于房地产和实业等D=365日。
+        """
+        p0 = data.iloc[0]
+        p1 = data.iloc[-1]
+        p0_date = data.index[0]
+        p1_date = data.index[-1]
+
+        days = get_days(p0_date, p1_date)
+        year = days/250
+        rate_per_year = math.pow(p1/p0, 1/year)
+        return rate_per_year
 
     def get_arg_parser(self):
         parser = argparse.ArgumentParser()
@@ -111,4 +196,4 @@ class ShowCalculater(BaseCalculator):
 if __name__ == '__main__':
     utils.init_logger()
     calculator = ShowCalculater()
-    calculator.main(args=None,console=True)
+    calculator.main(args=None, console=True)

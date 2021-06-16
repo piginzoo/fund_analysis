@@ -1,17 +1,42 @@
-from sqlalchemy import Column, Integer, String, Date, Float, create_engine, UniqueConstraint
+from sqlalchemy import Column, Integer, String, Date, Float, UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
-
-from fund_analysis.bo import get_field_values
 
 Base = declarative_base()
 
 
+class DBInfoMixin():
+    def get_info(self):
+        result = {}
+        for col, cname in self.get_column_mapping().items():
+            value = getattr(self, col)
+            result[cname] = value
+        return result
+
+    def get_field_values(self):
+        class_name = self.__class__.__name__
+
+        result = "<" + class_name + "("
+
+        f_names = dir(self)
+        for f_name in f_names:
+            if f_name == "metadata": continue
+            if f_name == "id": continue
+            if f_name.startswith("_"): continue
+            result += ",{}={}".format(f_name, getattr(self, f_name))
+        result += ")"
+        return result
+
+    def get_column_mapping(self):
+        raise ValueError("未实现")
+
+
 # 定义映射类Fund，其继承上一步创建的Base
-class Fund(Base):
+class Fund(Base, DBInfoMixin):
     """
     基金基本信息
     """
     __tablename__ = 'funds'
+
     id = Column(Integer, primary_key=True, autoincrement=True)
     code = Column(String(100))
     name = Column(String(200))
@@ -23,17 +48,28 @@ class Fund(Base):
     operate_mode = Column(String(20))  # 基金运作方式：开放式基金	封闭式基金	QDII	FOF	ETF	LOF
     total_asset = Column(Float())  # 总现值
 
+    def get_column_mapping(self):
+        return {
+            'code': '代码',
+            'name': '名字',
+            'start_date': '开始日期',
+            'end_date': '结束日期',
+            'fund_type': '类型',
+            'operate_mode': '运作方式',
+            'total_asset': '总现值'
+        }
+
     __table_args__ = (
         UniqueConstraint('code'),
     )
 
     # __repr__方法用于输出该类的对象被print()时输出的字符串，如果不想写可以不写
     def __repr__(self):
-        return get_field_values(self)
+        return self.get_field_values()
 
 
 # 定义映射类Fund，其继承上一步创建的Base
-class FundStock(Base):
+class FundStock(Base,DBInfoMixin):
     """
     基金的10大持仓股
     """
@@ -52,9 +88,16 @@ class FundStock(Base):
         UniqueConstraint('fund_code', 'stock_code'),
     )
 
+    def get_column_mapping(self):
+        return {
+            'stock_code': '股票代码',
+            'stock_name': '股票名称',
+            'proportion': '占比'
+        }
+
     # __repr__方法用于输出该类的对象被print()时输出的字符串，如果不想写可以不写
     def __repr__(self):
-        return get_field_values(self)
+        return self.get_field_values()
 
 
 class StockIndustry(Base):
@@ -74,5 +117,4 @@ class StockIndustry(Base):
 
     # __repr__方法用于输出该类的对象被print()时输出的字符串，如果不想写可以不写
     def __repr__(self):
-        return get_field_values(self)
-
+        return self.get_field_values()

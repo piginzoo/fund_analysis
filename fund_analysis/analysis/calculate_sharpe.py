@@ -16,6 +16,7 @@ Reference:
  <https://zh.wikipedia.org/wiki/%E5%A4%8F%E6%99%AE%E6%AF%94%E7%8E%87>
  <math>S_a = \frac{E[R_a-R_b]}{\sigma_a} = \frac{E[R_a-R_b]}{\sqrt{\mathrm{var}[R_a-R_b]}},</math>
  
+ 计算夏普指数
  let's calculate everyone's Sharpe Ratio:
  - it must be '混合型' or '股票型'
  - its start date must be from 2018.1.1 ( 3 years+)

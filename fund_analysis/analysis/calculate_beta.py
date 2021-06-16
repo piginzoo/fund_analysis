@@ -16,8 +16,9 @@ from fund_analysis.tools.data_utils import calculate_rate
 
 
 """
-This is a automatic investment analysis
-
+计算beta值，有两种方法
+- 使用协方差计算
+- 使用回归得到
 """
 import argparse
 from fund_analysis.tools import utils, data_utils

@@ -22,8 +22,6 @@ import statsmodels.api as sm
 import matplotlib.pyplot as plt
 import matplotlib
 
-matplotlib.use('Agg')
-
 """
 This is a automatic investment analysis
 
@@ -67,11 +65,12 @@ class AlphaCalculater(BaseCalculator):
 
         # 加载指数数据
         index_data = data_utils.load_index_data_by_name(index_name, period)
-        index_rate = index_data[['rate']]
+        index_rate = data_utils.calculate_rate(index_data,'close',period)
+        # index_rate = index_data[['rate']]
 
         # 加载无风险利率(/365=每天利率）
         bond_rate = data_utils.load_bond_interest_data() / PERIOD_NUM[period]
-        bond_rate = calculate_rate(bond_rate, '收盘', period, 'rate')
+        bond_rate = calculate_rate(bond_rate, '收盘', period)
 
         return data_rate, index_rate, bond_rate
 
@@ -96,9 +95,9 @@ class AlphaCalculater(BaseCalculator):
         y = r_i.iloc[:, 0] - r_f.iloc[:, 0]
         y = y.dropna()
 
+        # 会按照日期自动相减，日期对不上的为nan
         x = r_m.iloc[:, 0] - r_f.iloc[:, 0]
         x = x.dropna()
-
         x, y = join(x, y)
 
         logger.debug("预处理后:市场收益[%d]条, 基金/股票收益[%d]条，", len(x), len(y))
@@ -121,7 +120,7 @@ class AlphaCalculater(BaseCalculator):
         # 真实值与预测值的关系# 设置绘图风格
         plt.style.use('ggplot')
 
-        plt.rcParams['font.sans-serif'] = ['Arial Unicode MS']  # 指定默认字体
+        plt.rcParams['font.sans-serif'] = ['SimSun']  # 指定默认字体
 
         # 散点图
         # print(x,y)
@@ -159,7 +158,7 @@ class AlphaCalculater(BaseCalculator):
         return parser
 
 
-# python -m fund_analysis.analysis.calculate_alpha --code 519778 --type fund --period week --index 上证指数
+# python -m fund_analysis.analysis.calculate_alpha --code 001319 --type fund --period week --index 上证指数
 if __name__ == '__main__':
     calculator = AlphaCalculater()
-    calculator.main()
+    calculator.main(args=None,console=True)

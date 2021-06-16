@@ -23,12 +23,12 @@ def get_url(url, proxies=None):
 
 
 def init_logger(level=logging.DEBUG):
-    logging.basicConfig(format='%(asctime)s:%(filename)s:%(lineno)d:%(levelname)s : %(message)s',
-                        level=logging.DEBUG,
-                        handlers=[logging.StreamHandler()])
-    # logging.basicConfig(format='%(levelname)s : %(message)s',
-    #                     level=level,
+    # logging.basicConfig(format='%(asctime)s:%(filename)s:%(lineno)d:%(levelname)s : %(message)s',
+    #                     level=logging.DEBUG,
     #                     handlers=[logging.StreamHandler()])
+    logging.basicConfig(format='%(levelname)s : %(message)s',
+                        level=level,
+                        handlers=[logging.StreamHandler()])
 
 
 def load_config():
