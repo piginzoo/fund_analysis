@@ -149,23 +149,25 @@ class ShowCalculater(BaseCalculator):
         logger.info('日增长率 缺失      ：%r', sum(np.isnan(daily_growth_rate)))
         logger.info('日增长率 正天数     ：%r', sum(daily_growth_rate > 0))
         logger.info('日增长率 负天数(<=0)：%r', sum(daily_growth_rate <= 0))
-        logger.info("日收益率 均值      ：%.4f", data[[COL_DAILY_RATE]].mean().values[0])
-        logger.info("日收益率 方差      ：%.4f", data[[COL_DAILY_RATE]].var().values[0])
-        logger.info("日收益率 偏度      ：%.4f", data[[COL_DAILY_RATE]].skew().values[0])
-        logger.info("最大回撤率         ：%.4f",self.calculate_withdraw(data[[COL_ACCUMULATIVE_NET]]))
-        logger.info("年平均投资回报率    ：%.4f", self.calculate_AAGR(data[[COL_ACCUMULATIVE_NET]]))
+        logger.info("日收益率 均值      ：%.2f%%", data[[COL_DAILY_RATE]].mean().values[0])
+        logger.info("日收益率 方差      ：%.2f%%", data[[COL_DAILY_RATE]].var().values[0])
+        logger.info("日收益率 偏度      ：%.2f%%", data[[COL_DAILY_RATE]].skew().values[0])
+        logger.info("最大回撤率         ：%.2f%%",self.calculate_withdraw(data[[COL_ACCUMULATIVE_NET]])*100)
+        logger.info("年平均投资回报率   ：%.2f%%", self.calculate_AAGR(data[[COL_ACCUMULATIVE_NET]])*100)
+
+
 
         return _data
 
     def calculate_withdraw(self,data):
         """
         最大回撤：先找到最低的价格，然后往前回溯，最高的价格，然后计算回撤率
+        参考：http://fund.eastmoney.com/a/202011191706731233.html
         """
-        print(data,type(data))
-        min_index = data.idxmin()
-        print(min_index,type(min_index))
-        max_index = data[:min_index].idxmax()
-        withdraw_rate = (data.loc(max_index)-data.loc(min_index))/data.loc(max_index)
+        min_index = data.idxmin().values[0]
+        max_index = data[:min_index].idxmax().values[0]
+        # import pdb; pdb.set_trace()
+        withdraw_rate = (data.loc[max_index]-data.loc[min_index])/data.loc[max_index]
         return withdraw_rate
 
     def calculate_AAGR(self,data):
@@ -183,7 +185,8 @@ class ShowCalculater(BaseCalculator):
 
         days = get_days(p0_date, p1_date)
         year = days/250
-        rate_per_year = math.pow(p1/p0, 1/year)
+        # logger.debug("p0=%f,p1=%f,year=%f",p0,p1,year)
+        rate_per_year = math.pow(p1/p0, 1/year) - 1
         return rate_per_year
 
     def get_arg_parser(self):
