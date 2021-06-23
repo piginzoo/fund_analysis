@@ -4,5 +4,6 @@ data
 logs/
 *.pyc
 conf/
+venv/*
 data.zip
 .DS_Store
