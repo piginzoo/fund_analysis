@@ -32,15 +32,13 @@ def init_logger(level=logging.DEBUG):
 
 
 def load_config():
-    configFilePath = os.path.dirname(os.path.abspath(__file__)) + "/../../" + const.CONF_PATH
-
     if not os.path.exists(const.CONF_PATH):
-        raise ValueError("指定的环境配置文件不存在:" + configFilePath)
+        raise ValueError("指定的环境配置文件不存在:" + const.CONF_PATH)
     f = open(const.CONF_PATH, 'r', encoding='utf-8')
     result = f.read()
     # 转换成字典读出来
     data = yaml.load(result, Loader=yaml.FullLoader)
-    logger.info("读取配置文件:%r", configFilePath)
+    logger.info("读取配置文件:%r", const.CONF_PATH)
     return data
 
 
