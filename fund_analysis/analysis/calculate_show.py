@@ -13,7 +13,7 @@ from fund_analysis.bo.fund import Fund, FundStock
 from fund_analysis.bo.fund_industry import FundIndustry
 from fund_analysis.const import COL_DAILY_RATE, COL_ACCUMULATIVE_NET
 from fund_analysis.tools import utils, data_utils
-from fund_analysis.tools.date_utils import get_days
+from fund_analysis.tools.date_utils import get_days, date2str
 
 warnings.filterwarnings("ignore")
 warnings.filterwarnings("ignore", module="matplotlib")
@@ -34,7 +34,11 @@ class ShowCalculater(BaseCalculator):
         return "Show:展示股票/基金的基本信息"
 
     def plot(self, data):
-        date, data, accumulative_net_value, daily_growth_rate, index_close_price = data
+        data, index_close_price, max_withdraw, aagr, total_profit = data
+        date = data.index
+        accumulative_net_value = data[COL_ACCUMULATIVE_NET]
+        daily_growth_rate = data[COL_DAILY_RATE]
+
         plt.subplot(311)
 
         # 合并一下基金和指数数据
@@ -104,17 +108,12 @@ class ShowCalculater(BaseCalculator):
         if data is None:
             raise ValueError("数据不存在，代码：" + args.code)
 
-        # 获取净值日期、单位净值、累计净值、日增长率等数据
-        date = data.index
-        accumulative_net_value = data[COL_ACCUMULATIVE_NET]
-        daily_growth_rate = data[COL_DAILY_RATE]
-
         index_data = data_utils.load_index_data_by_name('上证指数')
         index_data = index_data[['close']]
 
         self.load_info(args.code)
 
-        return date, data, accumulative_net_value, daily_growth_rate, index_data
+        return data, index_data
 
     def load_info(self, code):
         session = utils.connect_database()
@@ -131,7 +130,7 @@ class ShowCalculater(BaseCalculator):
                 # contents = "\n".join(contents)
                 # return contents
                 for k, v in info.items():
-                    logger.info("%r : %r",k,v)
+                    logger.info("%r : %r", k, v)
 
         fund = session.query(Fund).filter(Fund.code == code).limit(1).first()
         fund_industries = session.query(FundStock).filter(FundStock.fund_code == code).all()
@@ -143,8 +142,18 @@ class ShowCalculater(BaseCalculator):
         logger.info("------------------------------")
         format(fund_stocks)
 
+        # 获取净值日期、单位净值、累计净值、日增长率等数据
+        # date = data.index
+        # accumulative_net_value = data[COL_ACCUMULATIVE_NET]
+        # daily_growth_rate = data[COL_DAILY_RATE]
+
     def calculate(self, _data):
-        date, data, accumulative_net_value, daily_growth_rate, index_close_price = _data
+        data, index_close_price = _data
+
+        daily_growth_rate = data[COL_DAILY_RATE]
+
+        max_withdraw = self.calculate_withdraw(data[[COL_ACCUMULATIVE_NET]])
+        start, year, total_profit, aagr = self.calculate_AAGR(data[[COL_ACCUMULATIVE_NET]])
 
         logger.info('日增长率 缺失      ：%r', sum(np.isnan(daily_growth_rate)))
         logger.info('日增长率 正天数     ：%r', sum(daily_growth_rate > 0))
@@ -152,14 +161,13 @@ class ShowCalculater(BaseCalculator):
         logger.info("日收益率 均值      ：%.2f%%", data[[COL_DAILY_RATE]].mean().values[0])
         logger.info("日收益率 方差      ：%.2f%%", data[[COL_DAILY_RATE]].var().values[0])
         logger.info("日收益率 偏度      ：%.2f%%", data[[COL_DAILY_RATE]].skew().values[0])
-        logger.info("最大回撤率         ：%.2f%%",self.calculate_withdraw(data[[COL_ACCUMULATIVE_NET]])*100)
-        logger.info("年平均投资回报率   ：%.2f%%", self.calculate_AAGR(data[[COL_ACCUMULATIVE_NET]])*100)
+        logger.info("最大回撤率         ：%.2f%%", max_withdraw * 100)
+        logger.info("年平均投资回报率   ：%.2f%%", aagr * 100)
+        logger.info("总收益率          ：%.2f%%", total_profit * 100)
 
+        return data, index_close_price, max_withdraw, start, year, aagr, total_profit
 
-
-        return _data
-
-    def calculate_withdraw(self,data):
+    def calculate_withdraw(self, data):
         """
         最大回撤：先找到最低的价格，然后往前回溯，最高的价格，然后计算回撤率
         参考：http://fund.eastmoney.com/a/202011191706731233.html
@@ -167,10 +175,10 @@ class ShowCalculater(BaseCalculator):
         min_index = data.idxmin().values[0]
         max_index = data[:min_index].idxmax().values[0]
         # import pdb; pdb.set_trace()
-        withdraw_rate = (data.loc[max_index]-data.loc[min_index])/data.loc[max_index]
-        return withdraw_rate
+        withdraw_rate = (data.loc[max_index] - data.loc[min_index]) / data.loc[max_index]
+        return withdraw_rate.values[0]
 
-    def calculate_AAGR(self,data):
+    def calculate_AAGR(self, data):
         """
         计算平均年化收益率
         # 参考： https://zhuanlan.zhihu.com/p/63121208
@@ -178,16 +186,34 @@ class ShowCalculater(BaseCalculator):
         2020.5.1 ~ 2021.3.6 , 计算出delta，
         # 对银行存款、票据、债券等D=360日，对于股票、期货等市场D=250日，对于房地产和实业等D=365日。
         """
-        p0 = data.iloc[0]
-        p1 = data.iloc[-1]
+        p0 = data.iloc[0].values[0]
+        p1 = data.iloc[-1].values[0]
         p0_date = data.index[0]
         p1_date = data.index[-1]
 
+        total_profit = (p1 - p0) / p0
         days = get_days(p0_date, p1_date)
-        year = days/250
-        # logger.debug("p0=%f,p1=%f,year=%f",p0,p1,year)
-        rate_per_year = math.pow(p1/p0, 1/year) - 1
-        return rate_per_year
+        year = days / 250
+        rate_per_year = math.pow(p1 / p0, 1 / year) - 1
+        logger.debug("[%s] %.2f  --(%.1f年)--> [%s] %.2f  : 年化收益率 %.2f ",
+                     date2str(p0_date), p0, year, date2str(p1_date), p1, rate_per_year)
+
+        return date2str(p0_date), year, total_profit, rate_per_year
+
+    # def calculate_total_profit(self, data):
+    #     """
+    #     计算总收益率
+    #     """
+    #     p0 = data.iloc[0].values[0]
+    #     p1 = data.iloc[-1].values[0]
+    #     p0_date = data.index[0]
+    #     p1_date = data.index[-1]
+    #     days = get_days(p0_date, p1_date)
+    #     year = days / 250
+    #
+    #     logger.debug("[%s] %.2f  --(%.1f年)--> [%s] %.2f : 收益率 %.2f ",
+    #                  date2str(p0_date), p0, year, date2str(p1_date), p1, float((p1 - p0) / p0))
+    #     return
 
     def get_arg_parser(self):
         parser = argparse.ArgumentParser()

@@ -22,9 +22,9 @@ def test_shapiro_test():
     W,p_value = stats.shapiro(data[const.COL_DAILY_RATE])
     # p_value
     if p_value < 0.05:
-        logger.debug("W=%.2f,p=%.2f，不是正态分布",W,p_value)
+        logger.debug("W=%.2f,p=%.2f，拒绝原假设(是正态分布)，不是正态分布",W,p_value)
     else:
-        logger.debug("W=%.2f,p=%.2f，不是正态分布",W,p_value)
+        logger.debug("W=%.2f,p=%.2f，接受原假设(正态分布)，是正态分布",W,p_value)
 
 def test_KS_test():
     """
