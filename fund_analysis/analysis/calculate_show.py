@@ -34,7 +34,7 @@ class ShowCalculater(BaseCalculator):
         return "Show:展示股票/基金的基本信息"
 
     def plot(self, data):
-        data, index_close_price, max_withdraw, aagr, total_profit = data
+        data, index_close_price, max_withdraw, start, year, aagr, total_profit = data
         date = data.index
         accumulative_net_value = data[COL_ACCUMULATIVE_NET]
         daily_growth_rate = data[COL_DAILY_RATE]
@@ -199,21 +199,6 @@ class ShowCalculater(BaseCalculator):
                      date2str(p0_date), p0, year, date2str(p1_date), p1, rate_per_year)
 
         return date2str(p0_date), year, total_profit, rate_per_year
-
-    # def calculate_total_profit(self, data):
-    #     """
-    #     计算总收益率
-    #     """
-    #     p0 = data.iloc[0].values[0]
-    #     p1 = data.iloc[-1].values[0]
-    #     p0_date = data.index[0]
-    #     p1_date = data.index[-1]
-    #     days = get_days(p0_date, p1_date)
-    #     year = days / 250
-    #
-    #     logger.debug("[%s] %.2f  --(%.1f年)--> [%s] %.2f : 收益率 %.2f ",
-    #                  date2str(p0_date), p0, year, date2str(p1_date), p1, float((p1 - p0) / p0))
-    #     return
 
     def get_arg_parser(self):
         parser = argparse.ArgumentParser()
