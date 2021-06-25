@@ -25,6 +25,7 @@ if __name__ == '__main__':
     parser.add_argument('--sub_type', '-d', type=str, default=None, help="字类型：基金有两种(info：基本信息|trade：交易数据）")
     parser.add_argument('--force', '-f', action='store_true', dest="force", default=False, help="是否再次强制爬取，覆盖已有的")
     parser.add_argument('--num', '-n', type=int, default=999999999, help="爬取条数")
+    parser.add_argument('--period', '-p', type=str, default='1d')
     args = parser.parse_args()
     utils.init_logger()
 
@@ -40,6 +41,6 @@ if __name__ == '__main__':
         exit()
 
     if args.code:
-        crawler.crawle_one(args.code, args.force)
+        crawler.crawle_one(args.code, args.force, args.period)
     else:
         crawler.crawle_all(args.code, args.num)

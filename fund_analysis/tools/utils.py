@@ -38,7 +38,7 @@ def load_config():
     result = f.read()
     # 转换成字典读出来
     data = yaml.load(result, Loader=yaml.FullLoader)
-    logger.info("读取配置文件:%r", data)
+    logger.info("读取配置文件:%r", const.CONF_PATH)
     return data
 
 

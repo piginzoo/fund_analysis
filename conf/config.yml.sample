@@ -1,0 +1,13 @@
+# This is the config file for JQdata accessing
+# uid: the account you registed in JQ
+# pwd: the password you use
+#
+# To use JQ (https://www.joinquant.com) you need to get the privilege to access securities
+# data.
+#
+# Usage:
+#     fill the correct info in this file and rename this file to config.yml to make it work
+
+jqdata:
+        uid: 13912345678
+        pwd: YourPasswordHere
