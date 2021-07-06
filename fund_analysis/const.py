@@ -13,6 +13,7 @@ COL_UNIT_NET = '单位净值'
 COL_ACCUMULATIVE_NET = '累计净值'
 COL_DAILY_RATE = '日增长率'
 
+# Dir and files path
 FUND_LIST_FILE = "data/db/fund_list.db"
 DB_FILE_BOND_INTEREST = "data/db/bond_interest_CN1YR.db"
 DB_FILE = 'data/db/funds.db'
@@ -20,7 +21,6 @@ FUND_DATA_DIR = 'data/funds'
 INDEX_DATA_DIR = 'data/index' # 指数数据
 PLAN_DIR = 'data/plan'
 CONF_PATH = 'conf/config.yml'
-
 STOCK_DIR = "data/stocks"
 
 PERIOD_DAY = 'day'  # 天

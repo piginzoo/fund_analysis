@@ -14,4 +14,5 @@ fi
 
 
 echo "启动服务器..."
+mkdir -p logs
 nohup python -m fund_analysis.web.server>logs/log.txt 2>&1 &

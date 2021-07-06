@@ -1,3 +1,5 @@
+import argparse
+import os
 from collections import namedtuple
 from queue import Empty
 
@@ -6,68 +8,10 @@ from fund_analysis.analysis.calculate_show import ShowCalculater
 from fund_analysis.tools.multi_processor import execute
 from fund_analysis.tools.utils import init_logger
 
-"""
-明星基金：https://mp.weixin.qq.com/s/vrnpUMaocnKEAmIsVNSyNQ
-这个是来验证，这篇文章中所提及的明星基金经理和他们的基金的TM模型结果
-"""
-star_funds = \
-    {'005827': '易方达蓝筹精选',
-     '110011': '易方达中小盘',
-     '110022': '易方达消费行业',
-     '110013': '易方达科翔',
-     '110015': '易方达行业领先',
-     '110027': '易方达安心回报A',
-     '270002': '广发稳健增长A',
-     '002939': '广发创新升级',
-     '001763': '广发多策略',
-     '000697': '汇添富全球移动互联',
-     '519069': '汇添富价值精选A',
-     '006113': '汇添富创新医药',
-     '519068': '汇添富成长焦点',
-     '002001': '华夏回报A',
-     '002891': '华夏移动互联人民币',
-     '006252': '富国消费主题A',
-     '161005': '富国天惠精选成长A',
-     '100060': '富国高新技术产业',
-     '007340': '南方科技创新A',
-     '202003': '南方绩优成长A',
-     '000595': '嘉实泰和',
-     '001044': '嘉实新消费',
-     '003095': '中欧医疗健康A',
-     '001938': '中欧时代先锋A',
-     '166002': '中欧新蓝筹A',
-     '166006': '中欧行业成长A',
-     '166005': '中欧价值发现A',
-     '163402': '兴全趋势投资',
-     '163406': '兴全合润',
-     '340005': '兴全合宜A',
-     # '163415': '兴全商业模式优选',
-     # '162605': '景顺长城鼎益',
-     # '260101': '景顺长城优选',
-     # '260116': '景顺长城核心竞争力A',
-     # '260103': '景顺长城动力平衡',
-     # '519772': '交银新生活力',
-     # '519736': '交银新成长',
-     # '519712': '交银阿尔法',
-     # '000854': '鹏华养老产业',
-     # '005812': '鹏华研究精选',
-     # '040020': '华安升级主题',
-     # '001714': '工银瑞信文体产业A',
-     # '000251': '工银瑞信金融地产A',
-     # '000831': '工银瑞信医疗保健行业',
-     # '169104': '东方红睿满沪港深',
-     # '003940': '银华盛世精选',
-     # '180012': '银华富裕主题',
-     # '001500': '泓德远见回报',
-     # '001256': '泓德优选成长',
-     # '001102': '前海开源国家比较优势A',
-     # '000136': '民生加银策略精选A',
-     # '001538': '上投摩根科技前沿',
-     # '161903': '万家行业优选',
-     # '000336': '农银汇理研究精选'
-     }
 tm_calculator = TMCalculater()
 basic_calculator = ShowCalculater()
+
+FILE_DIR="fund_analysis/projects/schema"
 
 Result = namedtuple('Result', ['code', 'name', 'start', 'year', 'alpha', 'beta2', 'profit', 'aagr', 'withdraw'])
 import logging
@@ -75,6 +19,26 @@ import logging
 logger = logging.getLogger(__name__)
 
 init_logger()
+
+
+def load_fund_list(file_name):
+    full_path = os.path.join(FILE_DIR,file_name)
+    if  not os.path.exists(full_path):
+        logger.warning("基金列表文件[%s]不存在",full_path)
+        return None
+    with open(full_path,"r",encoding='utf-8') as f:
+        lines = f.readlines()
+    funds = {}
+    for line in lines:
+        if line.strip().startswith("#"): continue # 忽略注释
+        line = line.strip()
+        commend_pos = line.find("#")
+        if commend_pos!=-1:
+            line = line[:commend_pos].strip()
+        code_name = line.split(":")
+        assert len(code_name)==2, len(code_name)
+        funds[code_name[0]] = code_name[1]
+    return funds
 
 
 def format(results):
@@ -138,10 +102,15 @@ def process(data, id, queue):
         max_withdraw))
 
 
-# python -m fund_analysis.projects.star_funds
+# python -m fund_analysis.projects.study_funds --funds cmb_recommend.txt
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--funds', '-f', type=str, default=None)
+    args = parser.parse_args()
+    funds = load_fund_list(args.funds)
+    if funds is None: exit()
 
-    queue = execute(star_funds, worker_num=4, function=process)
+    queue = execute(funds, worker_num=4, function=process)
     results = []
     while True:
         try:
