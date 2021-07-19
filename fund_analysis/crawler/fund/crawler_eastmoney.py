@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 class EastmoneyCrawler(Crawler):
 
-    def crawle_one(self, code,force=False):
+    def crawle_one(self, code,force=False,period=None):
         total_data = load_fund_data(code)
         if force:
             logger.info("强制重新爬取 基金[%s]",code)
