@@ -1,10 +1,9 @@
 from sqlalchemy import Column, Integer, String, Float, UniqueConstraint
 
-from fund_analysis.bo import get_field_values
-from fund_analysis.bo.fund import Base
+from fund_analysis.bo.fund import Base, DBInfoMixin
 
 
-class FundBeta(Base):
+class FundBeta(Base,DBInfoMixin):
     """
     基金的beta值
     """
@@ -24,4 +23,4 @@ class FundBeta(Base):
 
     # __repr__方法用于输出该类的对象被print()时输出的字符串，如果不想写可以不写
     def __repr__(self):
-        return get_field_values(self)
+        return self.get_field_values(self)

@@ -1,10 +1,9 @@
 from sqlalchemy import Column, Integer, String, Float, UniqueConstraint
 
-from fund_analysis.bo import get_field_values
-from fund_analysis.bo.fund import Base
+from fund_analysis.bo.fund import Base, DBInfoMixin
 
 
-class FundSharpe(Base):
+class FundSharpe(Base,DBInfoMixin):
     """
     基金的分析信息
     """
@@ -21,6 +20,17 @@ class FundSharpe(Base):
         UniqueConstraint('code'),
     )
 
+    def get_column_mapping(self):
+        return {
+            'code': '代码',
+            'name': '名字',
+            'sharpe_year': '夏普指数-年',
+            'sharpe_quarter': '夏普指数-季',
+            'sharpe_month': '夏普指数-月',
+            'sharpe_week': '夏普指数-周'
+        }
+
+
     # __repr__方法用于输出该类的对象被print()时输出的字符串，如果不想写可以不写
     def __repr__(self):
-        return get_field_values(self)
+        return self.get_field_values(self)

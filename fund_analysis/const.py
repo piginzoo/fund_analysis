@@ -73,3 +73,4 @@ PERIOD_NAMES = {
 
 CRAWLER_INFO = "info"
 CRAWLER_TRADE = "trade"
+CRAWLER_MANAGER = "manager"

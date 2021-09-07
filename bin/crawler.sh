@@ -9,7 +9,7 @@ then
     echo "如：bin/crawler.sh --type fund  --sub_type trade "
     echo "爬取股票："
     echo "如：bin/crawler.sh --code 300122 --type stock"
-    echo "如：bin/scrwler.sh --code 300122 --type stock --period 120m"
+    echo "如：bin/crawler.sh --code 300122 --type stock --period 120m"
 
     exit
 fi
