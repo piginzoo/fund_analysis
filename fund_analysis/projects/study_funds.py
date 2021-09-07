@@ -5,9 +5,11 @@ from queue import Empty
 
 from fund_analysis.analysis.calculate_TM import TMCalculater
 from fund_analysis.analysis.calculate_show import ShowCalculater
+from fund_analysis.bo.fund_manager import FundManager
 from fund_analysis.crawler.fund.crawler_eastmoney import EastmoneyCrawler
 from fund_analysis.crawler.fund.crawler_eastmoney_fund_manager import EastmoneyFundManagerCrawler
 from fund_analysis.crawler.fund.crawler_jqdata_fund import JQDataFundCrawler
+from fund_analysis.tools import utils
 from fund_analysis.tools.multi_processor import execute
 from fund_analysis.tools.utils import init_logger
 
@@ -16,7 +18,10 @@ basic_calculator = ShowCalculater()
 
 FILE_DIR = "fund_analysis/projects/schema"
 
-Result = namedtuple('Result', ['code', 'name', 'start', 'year', 'alpha', 'beta2', 'profit', 'aagr', 'withdraw'])
+Result = namedtuple('Result',
+                    ['code', 'name', 'start', 'year',
+                     'alpha', 'beta2', 'profit', 'aagr',
+                     'withdraw','manager','period','earn'])
 Fund = namedtuple('Fund', ['code', 'name', 'manager', 'company'])
 import logging
 
@@ -71,28 +76,18 @@ def update_fund(code):
 
 
 def format(results):
-    logger.debug(
-        "=====================================================================================================================")
+    logger.debug("="*170)
 
     logger.debug(
-        "| {1:^8} | {2:{0}^15} | {3:^8} | {4:^4} | {5:^6} |  {6:^6} |  {7:^4} |  {8:^4} |  {9:^4} |".format(
-            chr(12288), "Code", "名称", "开始", "年限", "α", "β2", "总收益", "年化收益", "最大回撤"
+        "| {1:^8} | {2:{0}^15} | {3:^8} | {4:^4} | {5:^6} |  {6:^6} |  {7:^4} |  {8:^4} |  {9:^4} | {10:^8} | {11:^8} | {12:^4} |".format(
+            chr(12288), "Code", "名称", "开始", "年限", "α", "β2", "总收益", "年化收益", "最大回撤", "基金经理", "任职时间", "任职收益"
         )
     )
 
     for r in results:
-        # print(r.code,
-        #       r.name,
-        #       r.alpha,
-        #       r.beta2,
-        #       r.profit * 100,
-        #       r.aagr * 100,
-        #       r.withdraw * 100
-        #       )
-        logger.debug(
-            "---------------------------------------------------------------------------------------------------------------------")
+        logger.debug("-"*170)
 
-        str_r = "| {1:^8} | {2:{0}^15} | {3:^8} | {4:^6.1f} | {5:^6.2%} |  {6:^6.2%} |  {7:^6.2%} |  {8:^8.2%} |  {9:^8.2%} |".format(
+        str_r = "| {1:^8} | {2:{0}^15} | {3:^8} | {4:^6.1f} | {5:^8.2%} |  {6:^8.2%} |  {7:^8.2%} |  {8:^8.2%} |  {9:^8.2%} | {10:^12} | {11:^12} | {12:^8} |".format(
             chr(12288),
             r.code,
             r.name,
@@ -102,11 +97,20 @@ def format(results):
             r.beta2,
             r.profit,
             r.aagr,
-            r.withdraw
+            r.withdraw,
+            r.manager,
+            r.period,
+            r.earn
         )
         logger.debug(str_r)
-    logger.debug(
-        "=====================================================================================================================")
+    logger.debug("="*170)
+
+def load_manager_info(code):
+    session = utils.connect_database()
+    fund_manager = session.query(FundManager).filter(FundManager.code == code).limit(1).first()
+    if not fund_manager:
+        return " - ", " - ", " - "
+    return fund_manager.manager, fund_manager.period, fund_manager.earn
 
 
 def process(fund, id, queue):
@@ -115,6 +119,9 @@ def process(fund, id, queue):
     args = "--code {}".format(fund.code)
     data, index_close_price, max_withdraw, start, year, aagr, total_profit = \
         basic_calculator.process(args)
+
+    manager, period, earn = load_manager_info(fund.code)
+
     logger.debug("[%s],α=%.4f,β2=%.4f", fund.code, alpha, beta2)
     logger.debug(
         "-----------------------------------------------------------------------------------------------------")
@@ -127,7 +134,10 @@ def process(fund, id, queue):
         beta2,
         total_profit,
         aagr,
-        max_withdraw))
+        max_withdraw,
+        manager,
+        period,
+        earn))
 
 
 # python -m fund_analysis.projects.study_funds --funds cmb_recommend.txt --update
