@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import pyplot
 
-from fund_analysis.analysis.base_calculater import BaseCalculator
+from fund_analysis.analysis.base_calculator import BaseCalculator
 from fund_analysis.bo.fund import Fund, FundStock
 from fund_analysis.bo.fund_industry import FundIndustry
 from fund_analysis.const import COL_DAILY_RATE, COL_ACCUMULATIVE_NET
@@ -43,9 +43,11 @@ class ShowCalculater(BaseCalculator):
 
         # 合并一下基金和指数数据
         fund_index_data = data_utils.merge_by_date([accumulative_net_value, index_close_price])
-        fund_index_data[[COL_ACCUMULATIVE_NET]] = fund_index_data[[COL_ACCUMULATIVE_NET]] / fund_index_data[
-            [COL_ACCUMULATIVE_NET]].max()
-        fund_index_data[['close']] = fund_index_data[['close']] / fund_index_data[['close']].max()
+
+        # 归一化一下，防止太大，显示不下，Y方向上
+        fund_index_data[[COL_ACCUMULATIVE_NET]] = fund_index_data[[COL_ACCUMULATIVE_NET]] / \
+                                                  fund_index_data[[COL_ACCUMULATIVE_NET]].max()
+        fund_index_data[['rate']] = fund_index_data[['rate']] / fund_index_data[['rate']].max()
 
         self.show_plot(x_data=fund_index_data.index,
                        y_data=fund_index_data,
@@ -109,11 +111,11 @@ class ShowCalculater(BaseCalculator):
             raise ValueError("数据不存在，代码：" + args.code)
 
         index_data = data_utils.load_index_data_by_name('上证指数')
-        index_data = index_data[['close']]
+        index_rate = data_utils.calculate_rate(index_data, 'close')
 
         self.load_info(args.code)
 
-        return data, index_data
+        return data, index_data, index_rate
 
     def load_info(self, code):
         session = utils.connect_database()
@@ -148,7 +150,7 @@ class ShowCalculater(BaseCalculator):
         # daily_growth_rate = data[COL_DAILY_RATE]
 
     def calculate(self, _data):
-        data, index_close_price = _data
+        data, index_close_price, index_rate = _data
 
         daily_growth_rate = data[COL_DAILY_RATE]
 

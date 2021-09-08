@@ -3,7 +3,7 @@ import importlib
 import logging
 import inspect
 
-from fund_analysis.analysis.base_calculater import BaseCalculator
+from fund_analysis.analysis.base_calculator import BaseCalculator
 from fund_analysis.tools import utils
 
 logger = logging.getLogger(__name__)

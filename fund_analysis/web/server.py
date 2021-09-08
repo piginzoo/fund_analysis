@@ -14,7 +14,7 @@ import os
 from flask import render_template, request, Flask, jsonify
 from werkzeug.routing import BaseConverter
 
-from fund_analysis.analysis.base_calculater import BaseCalculator
+from fund_analysis.analysis.base_calculator import BaseCalculator
 from fund_analysis.tools import utils
 from fund_analysis.tools.dynamic_loader import dynamic_instantiation
 from fund_analysis.tools.utils import start_capture_console, end_capture_console

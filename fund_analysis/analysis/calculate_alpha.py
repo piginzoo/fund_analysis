@@ -9,7 +9,7 @@ r_i - r_f = alpha_i + beta_i(r_m - r_f) + epsilon_i
 import logging
 import warnings
 
-from fund_analysis.analysis.base_calculater import BaseCalculator
+from fund_analysis.analysis.base_calculator import BaseCalculator
 from fund_analysis.tools.utils import export_matplotlib_image_2_base64
 
 warnings.filterwarnings("ignore")
@@ -66,7 +66,6 @@ class AlphaCalculater(BaseCalculator):
         # 加载指数数据
         index_data = data_utils.load_index_data_by_name(index_name, period)
         index_rate = data_utils.calculate_rate(index_data,'close',period)
-        # index_rate = index_data[['rate']]
 
         # 加载无风险利率(/365=每天利率）
         bond_rate = data_utils.load_bond_interest_data() / PERIOD_NUM[period]

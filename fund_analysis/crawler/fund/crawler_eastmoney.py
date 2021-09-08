@@ -9,6 +9,7 @@ from bs4 import BeautifulSoup
 
 from fund_analysis.const import NUM_PER_PAGE, COL_DATE, COL_DAILY_RATE, COL_ACCUMULATIVE_NET, COL_UNIT_NET
 from fund_analysis.crawler.crawler import Crawler
+from fund_analysis.tools import date_utils
 from fund_analysis.tools.data_utils import load_fund_data, save_fund_data
 from fund_analysis.tools.date_utils import get_yesterday, get_days_from_now
 from fund_analysis.tools.utils import *
@@ -112,7 +113,9 @@ class EastmoneyCrawler(Crawler):
             return _from, _end
 
         latest_day = self.get_latest_day(df)
-        logger.info("断点续爬：爬取从今天 (%r) -> (%r) 的数据", latest_day, get_yesterday())
+        logger.info("断点续爬：爬取从之前最后日期 (%r) -> 今天(%r) 的数据",
+                    date_utils.date2str(latest_day),
+                    date_utils.date2str(get_yesterday()))
         return latest_day, get_yesterday()
 
     # 从网页抓取数据

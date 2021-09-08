@@ -21,7 +21,7 @@ OLS解决高次因变量拟合：https://zhuanlan.zhihu.com/p/22692029
 import logging
 import warnings
 
-from fund_analysis.analysis.base_calculater import BaseCalculator
+from fund_analysis.analysis.base_calculator import BaseCalculator
 
 warnings.filterwarnings("ignore")
 warnings.filterwarnings("ignore", module="matplotlib")
@@ -72,11 +72,12 @@ class TMCalculater(BaseCalculator):
         # 加载指数数据
         index_data = data_utils.load_index_data_by_name(index_name, period)
         index_rate = data_utils.calculate_rate(index_data, 'close', period)
-        # index_rate = index_data[['rate']]
 
         # 加载无风险利率(/365=每天利率）
         bond_rate = data_utils.load_bond_interest_data() / PERIOD_NUM[period]
-        bond_rate = calculate_rate(bond_rate, '收盘', period)
+
+        # 需要平均一下利率，calulate_by='rate'
+        bond_rate = calculate_rate(bond_rate, '收盘', period, calulate_by='rate')
 
         return data_rate, index_rate, bond_rate
 

@@ -62,7 +62,7 @@ def load_data(code, type, period, index_name):
 
     # 加载指数数据
     index_data = data_utils.load_index_data_by_name(index_name, period)
-    index_rate = index_data[['rate']]
+    index_rate = data_utils.calculate_rate(index_data, 'close', period)
 
     # 加载无风险利率(/365=每天利率）
     bond_rate = data_utils.load_bond_interest_data() / PERIOD_NUM[period]

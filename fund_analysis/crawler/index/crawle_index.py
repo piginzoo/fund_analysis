@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 def crawle_index(code, index):
-    days = get_days(index.start,date_utils.today())
+    days = get_days(index.start, date_utils.today())
 
     # https://www.joinquant.com/help/api/help#JQData:%E6%8C%87%E6%95%B0%E6%A6%82%E5%86%B5
     data = get_bars(security=code,
@@ -30,9 +30,10 @@ def main():
     jqdata_utils.login()
 
     for code, index in INDEX.items():
-        data = crawle_index(code,index)
-        data_utils.save_index_data(code,data)
+        data = crawle_index(code, index)
+        data_utils.save_index_data(code, data, index_label='date')
         time.sleep(1)
+
 
 # download all index data once
 # python -m fund_analysis.crawler.index.crawle_index

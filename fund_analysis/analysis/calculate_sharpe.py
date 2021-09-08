@@ -8,6 +8,7 @@ from fund_analysis import const
 from fund_analysis.bo.fund import Fund
 from fund_analysis.const import DATE_FORMAT
 from fund_analysis.tools import utils, data_utils, date_utils
+from fund_analysis.tools.data_utils import calculate_rate
 
 logger = logging.getLogger(__name__)
 
@@ -115,6 +116,7 @@ def calculate_one_fund_by_period(fund, period):
     logger.debug("过滤出%d条基金净值记录，%r~%r", len(data), data.index[0], data.index[-1])
 
     bond_interests = data_utils.load_bond_interest_data(data.index)
+    bond_interests = calculate_rate(bond_interests, '收盘', period)
     logger.debug("过滤出%d条基准利率记录", len(bond_interests))
 
     # assert len(data) == len(bond_interests), "基金净值数据 ~ 基准利率 个数不一致"

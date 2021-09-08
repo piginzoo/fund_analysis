@@ -149,5 +149,5 @@ if __name__ == '__main__':
     args = parser.parse_args()
     code = args.code
 
-    utils.init_logger(logging.INFO)
+    utils.init_logger(logging.DEBUG)
     main(args.code)

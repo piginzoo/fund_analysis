@@ -39,26 +39,35 @@ def load_csv_data(csv_path, index_col):
                          date_parser=dateparse)
         if not df.index.is_unique:
             logger.warning("数据日期重复，删除掉重复日期")
-            df = df.drop_duplicates(inplace=True)
+            df.drop_duplicates(inplace=True)
 
         if df is None:
             logger.debug("加载基金数据 [%s] 为空", csv_path)
-
+        else:
+            logger.info("加载了[%s]数据，行数：%d", csv_path, len(df))
     except:
         logger.exception("解析[%s]数据失败", csv_path)
         return None
-    # logger.info("加载了[%s]数据，行数：%d", csv_path, len(df))
+
     return df
 
 
 def load_bond_interest_data(periods=None):
     """
+    计算国债利率，（作为基准利率），注意，利率每天一个当日利率，是年化的
+
+    ------------------------------------------------------------
+    日期	            收盘	    开盘	    高	    低	    涨跌幅
+    2021年5月6日	    2.573	2.58	2.599	2.565	-1.40%
+    2021年4月30日	2.61	2.635	2.635	2.597	-0.31%
+    ------------------------------------------------------------
+
     get the proper bond interests from the given periods
             收益率=债券利息/债券价格*100%，是指债券的回报率；简单说，债券价格是上下浮动，
             如果你买有1000元国债，年利率是5%，那么收益率是5%，如果价格变成950元，
             那么收益率=5%*1000/950*100%=5.26%，那么它的收益率上升，即收益率与债券价格是负相关。
             而年利率，也就是债券利息是一经发行就不会变的，而收益率是变化着的。
-    :param periods:
+    :param periods: 用来过滤的日期索引，只有这些日期被保留下来
     :return: 每天的收益率（百分比，比如 2 => 2% =>0.02）
     """
     try:
@@ -72,17 +81,8 @@ def load_bond_interest_data(periods=None):
         logger.exception("解析[%s]数据失败", const.DB_FILE_BOND_INTEREST)
         return None
 
-    # 按时间过滤
-
-    if periods is not None: df = df.loc[periods]
-
-    # interestes = []
-    # for date in periods:
-    #     _day_interestes = df['收盘'].loc[str(date)].values
-    #     if len(_day_interestes) == 0: continue
-    #     interestes.append([date, _day_interestes[0]])
-    # df = DataFrame(interestes, columns=['date', 'rate'])
-    # df.set_index(['date'], inplace=True)
+    # 按时间过滤,这么复杂原因的写法因为是如果index不在df中，会报错
+    if periods is not None: df = df.loc[periods.intersection(df.index)]
 
     df.sort_index(inplace=True)
     return df[['收盘']]
@@ -109,7 +109,6 @@ def load_index_data_by_name(name, period=const.PERIOD_DAY):
                          parse_dates=True,
                          date_parser=dateparse)
 
-        # index_data = calculate_rate(df, 'close', period)  # 把指数值转化成收益率，代表了市场r_m
         df.sort_index(inplace=True)
         return df
     except:
@@ -168,8 +167,8 @@ def save_fund_data(code, df):
     return save_data(FUND_DATA_DIR, "{}.csv".format(code), df)
 
 
-def save_index_data(code, df):
-    return save_data(INDEX_DATA_DIR, "{}.csv".format(code), df, index_label='date')
+def save_index_data(code, df, index_label=None):
+    return save_data(INDEX_DATA_DIR, "{}.csv".format(code), df, index_label=index_label)
 
 
 def filter_by_date(target_df, source_df):
@@ -187,7 +186,11 @@ def calculate_rate(df, col_name, interval=const.PERIOD_DAY, calulate_by='price')
     @:param interval 周期：日、周、月、年
     日，就是日，
     但是周、月、年，如果还要使用日期作为index的话，就要使用第一天做这周、这月、这年的收益率，
-    这样做是为了统一，虽然听上去不合理，
+    这样做是为了统一，虽然听上去不合理.
+
+    另外，calulate_by有两种模式：
+    1、price，就是是用 (price_day - price_pre_day) / price_pre_day
+    2、rate，这个其实就是针对利率的（只对国债利率有这个情况），他不是要这么求，他只需要把这段时间内的rate，做平均
     """
     # rate = (df[col_name] - df[col_name].shift(1)) / df[col_name].shift(1)
     # pct_change更好使
